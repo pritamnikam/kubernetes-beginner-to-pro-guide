@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-broken
+  template:
+    metadata:
+      labels:
+        app: web-broken
+    spec:
+      containers:
+      - name: web
+        image: registry.k8s.io/echoserver:9.99
+        ports:
+        - containerPort: 8080

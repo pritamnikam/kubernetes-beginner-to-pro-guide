@@ -17,6 +17,12 @@ Hands-on learning repository to master Kubernetes step by step through practical
 
 - [ ] Exercise 01: First Deployment + Service + Troubleshooting
 
+## Start Here (Week 1)
+
+- Learning plan: [notes/week-1-foundations.md](notes/week-1-foundations.md)
+- Command reference: [notes/kubectl-cheatsheet.md](notes/kubectl-cheatsheet.md)
+- Hands-on lab: [exercises/01-first-deployment/README.md](exercises/01-first-deployment/README.md)
+
 ## Repo Structure
 
 ```text
@@ -24,6 +30,12 @@ exercises/
   01-first-deployment/
 notes/
 ```
+
+## Week 1 Execution Order
+
+1. Read concept flow in [notes/week-1-foundations.md](notes/week-1-foundations.md).
+2. Run Exercise 01 in [exercises/01-first-deployment/README.md](exercises/01-first-deployment/README.md).
+3. Use [notes/kubectl-cheatsheet.md](notes/kubectl-cheatsheet.md) during troubleshooting.
 
 ## How We’ll Work
 
