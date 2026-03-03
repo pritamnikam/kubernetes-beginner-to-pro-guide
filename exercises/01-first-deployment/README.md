@@ -42,7 +42,6 @@ kubectl get endpoints web
 kubectl port-forward svc/web 8080:80
 ```
 
-Open `http://localhost:8080` in your browser. You should see the nginx welcome page.
 Open `http://localhost:8080` in your browser. You should see echoserver response details.
 
 ## Step 3: Troubleshooting Drill (Broken Manifest)
