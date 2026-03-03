@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stateful-web-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stateful-web-broken
+  template:
+    metadata:
+      labels:
+        app: stateful-web-broken
+    spec:
+      containers:
+      - name: worker
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        command:
+        - sh
+        - -c
+        - |
+          echo "This deployment is expected to fail until fixed.";
+          sleep 3600
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: api-key-typo

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stateful-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stateful-web
+  template:
+    metadata:
+      labels:
+        app: stateful-web
+    spec:
+      containers:
+      - name: worker
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        command:
+        - sh
+        - -c
+        - |
+          echo "Booting stateful-web";
+          echo "Loaded config:";
+          cat /etc/app-config/app.properties;
+          if [ -n "$API_KEY" ]; then
+            echo "Secret API key detected (value hidden).";
+          else
+            echo "Secret API key missing.";
+          fi;
+          while true; do
+            date >> /data/app.log;
+            sleep 5;
+          done
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: api-key
+        volumeMounts:
+        - name: app-config-vol
+          mountPath: /etc/app-config
+          readOnly: true
+        - name: app-data-vol
+          mountPath: /data
+      volumes:
+      - name: app-config-vol
+        configMap:
+          name: app-config
+      - name: app-data-vol
+        persistentVolumeClaim:
+          claimName: app-data-pvc

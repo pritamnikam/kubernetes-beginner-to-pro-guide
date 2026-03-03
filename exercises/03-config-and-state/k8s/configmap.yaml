@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  app.properties: |
+    APP_NAME=stateful-web
+    APP_MODE=training
+    LOG_LEVEL=info

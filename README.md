@@ -16,6 +16,8 @@ Hands-on learning repository to master Kubernetes step by step through practical
 ## Progress Tracker
 
 - [ ] Exercise 01: First Deployment + Service + Troubleshooting
+- [ ] Exercise 02: Rollout + History + Rollback
+- [ ] Exercise 03: ConfigMap + Secret + PVC + Break/Fix
 
 ## Start Here (Week 1)
 
@@ -23,11 +25,21 @@ Hands-on learning repository to master Kubernetes step by step through practical
 - Command reference: [notes/kubectl-cheatsheet.md](notes/kubectl-cheatsheet.md)
 - Hands-on lab: [exercises/01-first-deployment/README.md](exercises/01-first-deployment/README.md)
 
+## Continue Here (Week 2)
+
+- Hands-on lab: [exercises/02-rollout-and-rollback/README.md](exercises/02-rollout-and-rollback/README.md)
+
+## Continue Here (Week 3)
+
+- Hands-on lab: [exercises/03-config-and-state/README.md](exercises/03-config-and-state/README.md)
+
 ## Repo Structure
 
 ```text
 exercises/
   01-first-deployment/
+  02-rollout-and-rollback/
+  03-config-and-state/
 notes/
 ```
 
@@ -36,6 +48,8 @@ notes/
 1. Read concept flow in [notes/week-1-foundations.md](notes/week-1-foundations.md).
 2. Run Exercise 01 in [exercises/01-first-deployment/README.md](exercises/01-first-deployment/README.md).
 3. Use [notes/kubectl-cheatsheet.md](notes/kubectl-cheatsheet.md) during troubleshooting.
+4. Run Exercise 02 in [exercises/02-rollout-and-rollback/README.md](exercises/02-rollout-and-rollback/README.md).
+5. Run Exercise 03 in [exercises/03-config-and-state/README.md](exercises/03-config-and-state/README.md).
 
 ## How We’ll Work
 
