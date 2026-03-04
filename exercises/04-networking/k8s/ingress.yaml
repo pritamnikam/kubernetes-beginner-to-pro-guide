@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: net-web-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: net-web.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: net-web
+            port:
+              number: 80

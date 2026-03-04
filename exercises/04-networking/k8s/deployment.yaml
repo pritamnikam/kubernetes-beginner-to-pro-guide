@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: net-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: net-web
+  template:
+    metadata:
+      labels:
+        app: net-web
+    spec:
+      containers:
+      - name: web
+        image: registry.k8s.io/echoserver:1.10
+        ports:
+        - containerPort: 8080
