@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reliable-web-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reliable-web-broken
+  template:
+    metadata:
+      labels:
+        app: reliable-web-broken
+    spec:
+      containers:
+      - name: web
+        image: registry.k8s.io/echoserver:1.10
+        ports:
+        - containerPort: 8000
+        readinessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10

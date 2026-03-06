@@ -18,6 +18,8 @@ Hands-on learning repository to master Kubernetes step by step through practical
 - [ ] Exercise 01: First Deployment + Service + Troubleshooting
 - [ ] Exercise 02: Rollout + History + Rollback
 - [ ] Exercise 03: ConfigMap + Secret + PVC + Break/Fix
+- [ ] Exercise 04: DNS + Ingress + NetworkPolicy + Break/Fix
+- [ ] Exercise 05: Probes + Resources + HPA + Break/Fix
 
 ## Start Here (Week 1)
 
@@ -33,6 +35,14 @@ Hands-on learning repository to master Kubernetes step by step through practical
 
 - Hands-on lab: [exercises/03-config-and-state/README.md](exercises/03-config-and-state/README.md)
 
+## Continue Here (Week 4)
+
+- Hands-on lab: [exercises/04-networking/README.md](exercises/04-networking/README.md)
+
+## Continue Here (Week 5)
+
+- Hands-on lab: [exercises/05-reliability/README.md](exercises/05-reliability/README.md)
+
 ## Repo Structure
 
 ```text
@@ -40,6 +50,8 @@ exercises/
   01-first-deployment/
   02-rollout-and-rollback/
   03-config-and-state/
+  04-networking/
+  05-reliability/
 notes/
 ```
 
@@ -50,6 +62,8 @@ notes/
 3. Use [notes/kubectl-cheatsheet.md](notes/kubectl-cheatsheet.md) during troubleshooting.
 4. Run Exercise 02 in [exercises/02-rollout-and-rollback/README.md](exercises/02-rollout-and-rollback/README.md).
 5. Run Exercise 03 in [exercises/03-config-and-state/README.md](exercises/03-config-and-state/README.md).
+6. Run Exercise 04 in [exercises/04-networking/README.md](exercises/04-networking/README.md).
+7. Run Exercise 05 in [exercises/05-reliability/README.md](exercises/05-reliability/README.md).
 
 ## How We’ll Work
 
