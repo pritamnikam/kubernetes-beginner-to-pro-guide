@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obs-web-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: obs-web-broken
+  template:
+    metadata:
+      labels:
+        app: obs-web-broken
+    spec:
+      containers:
+      - name: app
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        env:
+        - name: APP_MODE
+          value: training
+        command:
+        - sh
+        - -c
+        - |
+          echo "Starting fixed app with APP_MODE=$APP_MODE";
+          while true; do
+            echo "[$(date)] fixed app running";
+            sleep 5;
+          done

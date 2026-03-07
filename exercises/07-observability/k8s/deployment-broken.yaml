@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obs-web-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: obs-web-broken
+  template:
+    metadata:
+      labels:
+        app: obs-web-broken
+    spec:
+      containers:
+      - name: app
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        command:
+        - sh
+        - -c
+        - |
+          echo "Starting broken app";
+          echo "Fatal: missing required configuration APP_MODE";
+          exit 1

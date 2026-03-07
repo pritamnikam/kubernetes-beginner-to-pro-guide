@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obs-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: obs-web
+  template:
+    metadata:
+      labels:
+        app: obs-web
+    spec:
+      containers:
+      - name: logger
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        ports:
+        - containerPort: 8080
+        command:
+        - sh
+        - -c
+        - |
+          mkdir -p /www;
+          echo "obs-web healthy" > /www/index.html;
+          httpd -f -p 8080 -h /www &
+          i=0;
+          while true; do
+            i=$((i+1));
+            echo "[$(date)] obs-web heartbeat #$i";
+            if [ $((i % 5)) -eq 0 ]; then
+              echo "[$(date)] obs-web status=ok";
+            fi;
+            sleep 2;
+          done
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
