@@ -20,6 +20,7 @@ Hands-on learning repository to master Kubernetes step by step through practical
 - [ ] Exercise 03: ConfigMap + Secret + PVC + Break/Fix
 - [ ] Exercise 04: DNS + Ingress + NetworkPolicy + Break/Fix
 - [ ] Exercise 05: Probes + Resources + HPA + Break/Fix
+- [ ] Exercise 06: ServiceAccount + RBAC + Pod Security + Break/Fix
 
 ## Start Here (Week 1)
 
@@ -43,6 +44,10 @@ Hands-on learning repository to master Kubernetes step by step through practical
 
 - Hands-on lab: [exercises/05-reliability/README.md](exercises/05-reliability/README.md)
 
+## Continue Here (Week 6)
+
+- Hands-on lab: [exercises/06-security/README.md](exercises/06-security/README.md)
+
 ## Repo Structure
 
 ```text
@@ -52,6 +57,7 @@ exercises/
   03-config-and-state/
   04-networking/
   05-reliability/
+  06-security/
 notes/
 ```
 
@@ -64,6 +70,7 @@ notes/
 5. Run Exercise 03 in [exercises/03-config-and-state/README.md](exercises/03-config-and-state/README.md).
 6. Run Exercise 04 in [exercises/04-networking/README.md](exercises/04-networking/README.md).
 7. Run Exercise 05 in [exercises/05-reliability/README.md](exercises/05-reliability/README.md).
+8. Run Exercise 06 in [exercises/06-security/README.md](exercises/06-security/README.md).
 
 ## How We’ll Work
 

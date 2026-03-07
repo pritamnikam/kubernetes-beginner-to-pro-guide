@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secure-web
+  template:
+    metadata:
+      labels:
+        app: secure-web
+    spec:
+      serviceAccountName: sa-reader
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: web
+        image: registry.k8s.io/echoserver:1.10
+        ports:
+        - containerPort: 8080
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+        - name: nginx-lib
+          mountPath: /var/lib/nginx
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: run
+          mountPath: /run
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 300m
+            memory: 128Mi
+      volumes:
+      - name: certs
+        emptyDir: {}
+      - name: nginx-lib
+        emptyDir: {}
+      - name: nginx-cache
+        emptyDir: {}
+      - name: run
+        emptyDir: {}
