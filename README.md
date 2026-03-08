@@ -22,6 +22,7 @@ Hands-on learning repository to master Kubernetes step by step through practical
 - [ ] Exercise 05: Probes + Resources + HPA + Break/Fix
 - [ ] Exercise 06: ServiceAccount + RBAC + Pod Security + Break/Fix
 - [ ] Exercise 07: Logs + Metrics + Troubleshooting + Break/Fix
+- [ ] Exercise 08: Helm + CI/CD Validation + GitOps + Rollback
 
 ## Start Here (Week 1)
 
@@ -53,6 +54,10 @@ Hands-on learning repository to master Kubernetes step by step through practical
 
 - Hands-on lab: [exercises/07-observability/README.md](exercises/07-observability/README.md)
 
+## Continue Here (Week 8)
+
+- Hands-on lab: [exercises/08-production/README.md](exercises/08-production/README.md)
+
 ## Repo Structure
 
 ```text
@@ -64,6 +69,7 @@ exercises/
   05-reliability/
   06-security/
   07-observability/
+  08-production/
 notes/
 ```
 
@@ -78,6 +84,7 @@ notes/
 7. Run Exercise 05 in [exercises/05-reliability/README.md](exercises/05-reliability/README.md).
 8. Run Exercise 06 in [exercises/06-security/README.md](exercises/06-security/README.md).
 9. Run Exercise 07 in [exercises/07-observability/README.md](exercises/07-observability/README.md).
+10. Run Exercise 08 in [exercises/08-production/README.md](exercises/08-production/README.md).
 
 ## How We’ll Work
 

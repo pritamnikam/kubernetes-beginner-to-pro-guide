@@ -1,0 +1,46 @@
+name: production-validation
+
+on:
+  pull_request:
+    paths:
+      - "exercises/08-production/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: exercises/08-production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Helm lint
+        run: helm lint helm/k8s-app
+
+      - name: Helm render staging
+        run: helm template app-staging helm/k8s-app -f helm/k8s-app/values-staging.yaml > out-staging.yaml
+
+      - name: Helm render prod
+        run: helm template app-prod helm/k8s-app -f helm/k8s-app/values-prod.yaml > out-prod.yaml
+
+      - name: Client-side schema validate rendered manifests
+        run: |
+          kubectl apply --dry-run=client -f out-staging.yaml
+          kubectl apply --dry-run=client -f out-prod.yaml
+
+      - name: Build Kustomize overlays
+        run: |
+          kubectl kustomize gitops/overlays/staging > gitops-staging.yaml
+          kubectl kustomize gitops/overlays/prod > gitops-prod.yaml
+
+      - name: Validate Kustomize overlays
+        run: |
+          kubectl apply --dry-run=client -f gitops-staging.yaml
+          kubectl apply --dry-run=client -f gitops-prod.yaml
