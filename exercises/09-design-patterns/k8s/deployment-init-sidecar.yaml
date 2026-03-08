@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pattern-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pattern-app
+  template:
+    metadata:
+      labels:
+        app: pattern-app
+    spec:
+      initContainers:
+      - name: init-config
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        command: ["sh", "-c", "echo init-complete > /work/init.txt"]
+        volumeMounts:
+        - name: work
+          mountPath: /work
+      containers:
+      - name: main
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        command: ["sh", "-c", "while true; do echo main-running; cat /work/init.txt; sleep 5; done"]
+        volumeMounts:
+        - name: work
+          mountPath: /work
+      - name: sidecar
+        image: registry.k8s.io/e2e-test-images/busybox:1.29-2
+        command: ["sh", "-c", "while true; do echo sidecar-log-forwarder; sleep 5; done"]
+      volumes:
+      - name: work
+        emptyDir: {}

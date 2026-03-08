@@ -15,3 +15,12 @@
 
 - kubectl quick commands: [kubectl-cheatsheet.md](kubectl-cheatsheet.md)
 - Request lifecycle deep dive: [kubernetes-request-lifecycle.md](kubernetes-request-lifecycle.md)
+
+## Advanced Notes
+
+- Track index: [advanced-topics-index.md](advanced-topics-index.md)
+- Design patterns: [advanced-design-patterns.md](advanced-design-patterns.md)
+- CRD and operators: [advanced-crd-and-operators.md](advanced-crd-and-operators.md)
+- Building blocks: [advanced-building-blocks.md](advanced-building-blocks.md)
+- Behind the scenes: [advanced-behind-the-scenes.md](advanced-behind-the-scenes.md)
+- Cloud managed Kubernetes: [advanced-cloud-managed-kubernetes.md](advanced-cloud-managed-kubernetes.md)
