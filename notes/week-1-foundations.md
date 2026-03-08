@@ -2,6 +2,8 @@
 
 This week builds your core Kubernetes mental model and command fluency.
 
+This week maps to [Exercise 01](../exercises/01-first-deployment/README.md).
+
 ## Learning Outcomes
 
 By the end of Week 1, you should be able to:

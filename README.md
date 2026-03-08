@@ -28,6 +28,8 @@ Hands-on learning repository to master Kubernetes step by step through practical
 
 - Learning plan: [notes/week-1-foundations.md](notes/week-1-foundations.md)
 - Command reference: [notes/kubectl-cheatsheet.md](notes/kubectl-cheatsheet.md)
+- Full notes index: [notes/README.md](notes/README.md)
+- Request lifecycle guide: [notes/kubernetes-request-lifecycle.md](notes/kubernetes-request-lifecycle.md)
 - Hands-on lab: [exercises/01-first-deployment/README.md](exercises/01-first-deployment/README.md)
 
 ## Continue Here (Week 2)
