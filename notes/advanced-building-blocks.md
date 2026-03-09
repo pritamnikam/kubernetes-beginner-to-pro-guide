@@ -23,6 +23,10 @@
 - Control path: desired state updates and reconciliation.
 - Data path: real app traffic between client and container.
 
+## Kubernetes Architecture
+
+![Kubernetes Architecture](./kubernetes-architecture.png)
+
 ## Command Map
 
 ```bash
