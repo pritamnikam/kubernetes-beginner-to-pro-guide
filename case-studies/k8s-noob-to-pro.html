@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>K8s Noob → Pro · GKE Learning Track</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#0a0c10;--ink2:#111520;--ink3:#161c28;
+  --border:#1e2a3a;--border2:#253347;
+  --cyan:#00e5ff;--lime:#a8ff3e;--amber:#ffb830;--rose:#ff4d6d;--violet:#b06dff;--sky:#4db8ff;
+  --text:#dce8f0;--muted:#6b8ea8;--faint:#2a3d52;
+  --mono:'IBM Plex Mono',monospace;
+  --head:'Bebas Neue',sans-serif;
+  --body:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--ink);color:var(--text);overflow-x:hidden;min-height:100vh}
+
+/* BG */
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(0,229,255,.05) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 40% at 80% 110%,rgba(168,255,62,.04) 0%,transparent 60%);
+  pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 28px}
+
+/* ══ HERO ══ */
+.hero{padding:56px 0 48px;text-align:center}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cyan);background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);
+  border-radius:100px;padding:5px 16px;margin-bottom:32px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--lime);
+  box-shadow:0 0 8px var(--lime);animation:livepulse 2s ease-in-out infinite}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+h1{font-family:var(--head);font-size:clamp(52px,9vw,110px);line-height:.95;letter-spacing:.02em;margin-bottom:20px}
+h1 .g1{color:var(--cyan);text-shadow:0 0 60px rgba(0,229,255,.3)}
+h1 .g2{color:var(--text);opacity:.3}
+h1 .g3{color:var(--lime);text-shadow:0 0 60px rgba(168,255,62,.3)}
+.hero-sub{font-size:16px;color:var(--muted);max-width:580px;margin:0 auto 44px;line-height:1.7}
+
+/* ══ XP BAR ══ */
+.xp-strip{display:flex;align-items:center;gap:14px;
+  background:var(--ink2);border:1px solid var(--border);border-radius:14px;
+  padding:14px 20px;margin-bottom:48px;flex-wrap:wrap}
+.xp-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);white-space:nowrap}
+.xp-track{flex:1;height:6px;background:var(--faint);border-radius:3px;min-width:100px;overflow:hidden}
+.xp-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--lime));
+  transition:width .6s cubic-bezier(.4,0,.2,1);width:0%}
+.xp-val{font-family:var(--mono);font-size:12px;color:var(--lime);
+  background:rgba(168,255,62,.08);border:1px solid rgba(168,255,62,.2);
+  border-radius:6px;padding:3px 10px;white-space:nowrap}
+.xp-rank{font-family:var(--mono);font-size:11px;color:var(--amber);
+  background:rgba(255,184,48,.07);border:1px solid rgba(255,184,48,.18);
+  border-radius:6px;padding:3px 10px;white-space:nowrap}
+
+/* ══ SECTION HEADER ══ */
+.sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.sec-hdr span{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--faint)}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ══ CASE GRID ══ */
+.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:14px}
+
+.ccard{background:var(--ink2);border:1px solid var(--border);border-radius:14px;
+  padding:22px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.ccard::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 50% -10%,var(--cc,rgba(0,229,255,.1)) 0%,transparent 70%);
+  opacity:0;transition:opacity .3s}
+.ccard:hover{border-color:var(--cc-border,rgba(0,229,255,.4));transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.ccard:hover::after{opacity:1}
+.ccard.sel{border-color:var(--cc-border,rgba(0,229,255,.5));background:var(--ink3);
+  box-shadow:0 0 0 1px var(--cc-border,rgba(0,229,255,.15)),0 16px 48px rgba(0,0,0,.5)}
+.ccard.sel::after{opacity:1}
+
+.cc-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.cc-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;border:1px solid rgba(255,255,255,.07)}
+.cc-name{font-family:var(--head);font-size:22px;letter-spacing:.04em;line-height:1}
+.cc-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
+.cc-desc{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.cc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.ctag{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid;
+  text-transform:uppercase;letter-spacing:.06em}
+.cc-foot{display:flex;align-items:center;justify-content:space-between}
+.cc-diff{display:flex;gap:3px;align-items:center}
+.dbar{width:16px;height:3px;border-radius:2px;background:var(--faint)}
+.dbar.on{background:var(--cc-border,var(--cyan))}
+.dlbl{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:5px}
+.cc-btn{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  padding:5px 12px;border-radius:6px;border:1px solid var(--cc-border,rgba(0,229,255,.4));
+  color:var(--cc-border,var(--cyan));background:transparent;cursor:pointer;transition:all .2s}
+.cc-btn:hover,.ccard.sel .cc-btn{background:var(--cc-border,var(--cyan));color:var(--ink)}
+
+/* ══ DETAIL PANEL ══ */
+.detail{background:var(--ink2);border:1px solid var(--border);border-radius:16px;
+  margin-bottom:48px;overflow:hidden;display:none;animation:fadein .3s ease}
+.detail.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+.d-hero{padding:32px 36px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.d-ico{font-size:44px}
+.d-info{flex:1}
+.d-title{font-family:var(--head);font-size:40px;letter-spacing:.04em;line-height:1}
+.d-sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px}
+.d-close{background:none;border:1px solid var(--border);color:var(--muted);
+  width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:auto}
+.d-close:hover{border-color:var(--rose);color:var(--rose)}
+
+/* TABS */
+.tabs{display:flex;gap:2px;padding:0 36px;border-bottom:1px solid var(--border);
+  background:var(--ink);overflow-x:auto}
+.tab{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+  padding:12px 18px;border-bottom:2px solid transparent;color:var(--muted);
+  cursor:pointer;transition:all .2s;white-space:nowrap;margin-bottom:-1px}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--d-accent,var(--cyan));border-bottom-color:var(--d-accent,var(--cyan))}
+
+.d-body{padding:32px 36px}
+.pane{display:none}
+.pane.on{display:block}
+
+/* ══ EXECUTIVE SUMMARY ══ */
+.exec-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+@media(max-width:700px){.exec-grid{grid-template-columns:1fr}}
+.exec-card{background:var(--ink3);border:1px solid var(--border);border-radius:12px;padding:20px}
+.ec-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--muted);margin-bottom:8px}
+.ec-val{font-size:14px;line-height:1.6;color:var(--text)}
+.ec-val.big{font-family:var(--head);font-size:28px;letter-spacing:.04em}
+.exec-bar{background:var(--ink3);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.exec-para{font-size:14px;line-height:1.8;color:var(--muted);margin-bottom:16px}
+.exec-para strong{color:var(--text)}
+.highlight-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.hl-chip{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);
+  border-radius:8px;padding:10px 16px;font-size:13px;color:var(--cyan)}
+.hl-chip b{display:block;font-family:var(--mono);font-size:18px;color:var(--cyan);margin-bottom:2px}
+.hl-chip span{font-size:11px;color:var(--muted)}
+.learn-list{list-style:none}
+.learn-list li{display:flex;align-items:flex-start;gap:10px;font-size:13px;
+  color:var(--muted);padding:7px 0;border-bottom:1px solid var(--faint)}
+.learn-list li:last-child{border-bottom:none}
+.learn-list li::before{content:'▸';color:var(--d-accent,var(--cyan));flex-shrink:0;margin-top:1px}
+
+/* ══ BUILDING BLOCKS ══ */
+.bb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:28px}
+.bb-card{background:var(--ink3);border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  transition:border-color .2s}
+.bb-card:hover{border-color:var(--border2)}
+.bb-head{padding:14px 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.bb-icon{font-size:18px}
+.bb-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)}
+.bb-kind{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  padding:2px 6px;border-radius:4px;border:1px solid;margin-left:auto}
+.bb-body{padding:14px 16px}
+.bb-sig{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.bb-why{font-family:var(--mono);font-size:10px;color:var(--d-accent,var(--cyan));
+  background:rgba(0,229,255,.05);border-radius:6px;padding:8px 10px;line-height:1.5}
+
+/* ══ PHASES ══ */
+.phase-list{display:flex;flex-direction:column;gap:10px}
+.phase{background:var(--ink3);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.phase-hdr{padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:background .2s}
+.phase-hdr:hover{background:rgba(255,255,255,.02)}
+.ph-num{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:13px;font-weight:700;flex-shrink:0;
+  background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.15);color:var(--cyan)}
+.ph-info{flex:1}
+.ph-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:15px;margin-bottom:2px}
+.ph-desc{font-size:12px;color:var(--muted)}
+.ph-chev{color:var(--faint);font-size:12px;transition:transform .2s}
+.phase.open .ph-chev{transform:rotate(90deg);color:var(--cyan)}
+.phase-body{display:none;padding:0 18px 16px}
+.phase.open .phase-body{display:block}
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--faint);font-size:12.5px;color:var(--muted)}
+.task-row:last-child{border-bottom:none}
+.tck{width:18px;height:18px;border-radius:5px;border:1px solid var(--border2);
+  cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;transition:all .2s;margin-top:1px}
+.tck.done{background:var(--lime);border-color:var(--lime);color:var(--ink);font-weight:700}
+.task-row.done-row{opacity:.5}
+.task-row.done-row .tck-text{text-decoration:line-through}
+
+/* ══ YAML / COMMANDS ══ */
+.yaml-section{margin-bottom:24px}
+.ys-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.ys-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.code-block{background:#070c12;border:1px solid var(--border);border-radius:10px;
+  padding:18px;margin-bottom:12px;position:relative;overflow-x:auto}
+.code-block pre{font-family:var(--mono);font-size:12px;line-height:1.75;color:#c9d8e8}
+.code-block .cm{color:#3a5a72}
+.code-block .ky{color:#b06dff}
+.code-block .vl{color:#a8ff3e}
+.code-block .st{color:#ffb830}
+.code-block .op{color:#00e5ff}
+.code-block .kw{color:#ff6b9d}
+.cb-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);background:var(--ink3);border:1px solid var(--border);
+  border-radius:4px;padding:2px 8px;margin-bottom:10px;display:inline-block}
+
+/* ══ ARCH ══ */
+.arch-box{background:#070c12;border:1px solid var(--border);border-radius:10px;
+  padding:20px 24px;overflow-x:auto;margin-bottom:20px}
+.arch-box pre{font-family:var(--mono);font-size:12px;line-height:1.75;color:var(--d-accent,var(--cyan))}
+
+/* ══ CONCEPT CHIPS ══ */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:24px}
+.con-card{background:var(--ink3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+  border-left:3px solid var(--d-accent,var(--cyan))}
+.con-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.con-sub{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+@media(max-width:600px){
+  .d-body{padding:20px 18px}
+  .tabs{padding:0 18px}
+  .d-hero{padding:20px 18px 16px}
+  .bb-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow"><span class="live-dot"></span>Google Kubernetes Engine · Hands-On Track · 8 Case Studies</div>
+  <h1><span class="g1">K8S</span><br><span class="g2">NOOB</span> <span class="g3">→ PRO</span></h1>
+  <p class="hero-sub">Learn by building real production systems. Every case study reveals deeper Kubernetes primitives — from your first Pod to multi-cluster operators.</p>
+</div>
+
+<!-- XP BAR -->
+<div class="xp-strip">
+  <span class="xp-label">Progress</span>
+  <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+  <div class="xp-val" id="xpVal">0 XP</div>
+  <div class="xp-rank" id="xpRank">🌱 Cluster Newbie</div>
+</div>
+
+<div class="sec-hdr"><span>Choose Your Mission · 8 Case Studies</span></div>
+<div class="case-grid" id="caseGrid"></div>
+<div class="detail" id="detailPanel"></div>
+
+</div><!-- /wrap -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════
+const CASES = [
+{
+  id:'url',icon:'🔗',title:'URL SHORTENER',sub:'10k rps · stateless api',
+  color:'#00e5ff',cborder:'rgba(0,229,255,.45)',cbg:'rgba(0,229,255,.08)',
+  diff:1,dlbl:'Beginner',
+  desc:'The perfect first app. Stateless API + Redis cache teaches you Pods, Services, ConfigMaps, HPA and Ingress end-to-end.',
+  tags:[{l:'Deployment',c:'#00e5ff'},{l:'HPA',c:'#a8ff3e'},{l:'Redis',c:'#b06dff'},{l:'Ingress',c:'#4db8ff'}],
+
+  summary:{
+    tagline:'A globally distributed link shortening service capable of handling 10,000 requests per second with sub-10ms p99 latency.',
+    why:'This case study introduces every foundational K8s concept. You deploy a real API, configure Redis as a cache, expose it via Ingress with TLS, and watch autoscaling react to live load — all within a single namespace.',
+    metrics:[{v:'10k',l:'RPS target'},{v:'<10ms',l:'p99 latency'},{v:'3',l:'replicas'},{v:'99.9%',l:'SLA'}],
+    learns:[
+      'Understand the Pod → ReplicaSet → Deployment ownership chain',
+      'Differentiate ClusterIP, NodePort, and LoadBalancer Services',
+      'Externalize config safely with ConfigMaps and Secrets',
+      'Autoscale horizontally based on CPU and custom metrics',
+      'Route external HTTPS traffic using Ingress + cert-manager',
+      'Use Redis as a K8s StatefulSet with persistent storage',
+    ]
+  },
+
+  arch:`
+  ┌─────────────────────────────────────────────────────────┐
+  │                   GKE CLUSTER                           │
+  │                                                         │
+  │  [Internet] ──→ [Cloud Load Balancer]                   │
+  │                        │                                │
+  │               [Ingress Controller]                      │
+  │               nginx / GKE Ingress                       │
+  │                        │                                │
+  │          ┌─────────────┴──────────────┐                 │
+  │          ↓                            ↓                 │
+  │   [url-api Deployment]        [redirect-api]            │
+  │   3 replicas → HPA(3-20)      1 replica                 │
+  │          │                            │                 │
+  │          └──────────┬─────────────────┘                 │
+  │                     ↓                                   │
+  │           [Redis StatefulSet]  ←──── [ConfigMap]        │
+  │           cache + counters           (REDIS_HOST etc)   │
+  │                     │                                   │
+  │           [PostgreSQL StatefulSet]                      │
+  │           persistent url store                          │
+  └─────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'📦',name:'Pod',kind:'Core',kindColor:'#00e5ff',
+     sig:'The smallest deployable unit in Kubernetes. A Pod wraps one or more containers that share network and storage. The url-api runs as a single-container Pod managed by a Deployment.',
+     why:'WHY: Kubernetes manages Pods, not containers directly. Understanding Pod lifecycle (Pending→Running→Succeeded/Failed) is critical for debugging.'},
+    {icon:'🔁',name:'Deployment',kind:'Workload',kindColor:'#a8ff3e',
+     sig:'Declares the desired state for your app: which image, how many replicas, update strategy. The controller loop continuously reconciles actual vs desired state.',
+     why:'WHY: Never run bare Pods in production. Deployments give you rolling updates, rollback, and self-healing for free.'},
+    {icon:'🌐',name:'Service',kind:'Network',kindColor:'#4db8ff',
+     sig:'A stable virtual IP (ClusterIP) that load-balances across all matching Pods. Even as Pods come and go, the Service IP stays constant.',
+     why:'WHY: Pod IPs are ephemeral. Services are the stable endpoint your other services and Ingress rely on.'},
+    {icon:'⚙️',name:'ConfigMap',kind:'Config',kindColor:'#ffb830',
+     sig:'Key-value store for non-sensitive configuration. Mount as env vars or files. The url-api reads REDIS_HOST, DB_PORT from here.',
+     why:'WHY: Separating config from code means one image runs in dev, staging, and prod — only the ConfigMap changes.'},
+    {icon:'🔐',name:'Secret',kind:'Config',kindColor:'#ff4d6d',
+     sig:'Like ConfigMap but base64-encoded (and ideally encrypted at rest via KMS). Stores DB passwords, API keys. Never bake secrets into Docker images.',
+     why:'WHY: Secrets can be rotated independently of code. With External Secrets Operator, they sync from GCP Secret Manager automatically.'},
+    {icon:'📈',name:'HPA',kind:'Autoscale',kindColor:'#b06dff',
+     sig:'Horizontal Pod Autoscaler watches CPU/memory metrics (or custom ones via KEDA) and scales replicas between minReplicas and maxReplicas.',
+     why:'WHY: Traffic is unpredictable. HPA lets the system scale out during viral spikes and scale in at night to save cost.'},
+    {icon:'🚪',name:'Ingress',kind:'Network',kindColor:'#00e5ff',
+     sig:'An L7 HTTP router. Maps hostnames and paths to backend Services. Works with nginx, Traefik, or GKE\'s built-in Ingress.',
+     why:'WHY: Without Ingress you\'d need one LoadBalancer per service (expensive). Ingress shares one LB across all routes.'},
+    {icon:'🗂️',name:'Namespace',kind:'Isolation',kindColor:'#a8ff3e',
+     sig:'A virtual cluster within a cluster. Provides scope for names and resource quotas. All url-shortener resources live in the url namespace.',
+     why:'WHY: Namespaces prevent accidental cross-team interference and allow per-team ResourceQuotas and NetworkPolicies.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — First Deployment',desc:'Ship a container to Kubernetes and understand the fundamental primitives.',tasks:[
+      'Install kubectl + gcloud CLI, configure kubeconfig',
+      'Create GKE Autopilot cluster: gcloud container clusters create-auto url-cluster',
+      'Write Deployment YAML: 1 replica of url-api:latest',
+      'Apply it: kubectl apply -f deployment.yaml',
+      'Watch pods start: kubectl get pods -w',
+      'Scale manually: kubectl scale deployment url-api --replicas=3',
+      'Describe a pod: kubectl describe pod <name> — read Events section',
+    ]},
+    {title:'Phase 2 — Services & Networking',desc:'Expose your app inside and outside the cluster.',tasks:[
+      'Create a ClusterIP Service for url-api (internal only)',
+      'Test with port-forward: kubectl port-forward svc/url-api 8080:80',
+      'Create a LoadBalancer Service — get external IP from EXTERNAL-IP column',
+      'Deploy Redis and expose via headless Service (clusterIP: None)',
+      'Verify DNS: kubectl exec -it url-api -- nslookup redis',
+    ]},
+    {title:'Phase 3 — Config & Secrets',desc:'No hardcoded values. Ever.',tasks:[
+      'Create ConfigMap with REDIS_HOST, REDIS_PORT, DB_NAME',
+      'Create Secret with DB_PASSWORD (kubectl create secret generic)',
+      'Mount both as env vars in the Deployment spec',
+      'Rotate the DB_PASSWORD Secret without redeploying',
+      'Verify with: kubectl exec -- printenv | grep REDIS',
+    ]},
+    {title:'Phase 4 — Ingress + TLS',desc:'Real HTTPS with automatic certificates.',tasks:[
+      'Install cert-manager: kubectl apply -f cert-manager.yaml',
+      'Create ClusterIssuer pointing to Let\'s Encrypt',
+      'Write Ingress resource: s.yourdomain.com → url-api:80',
+      'Annotate with cert-manager.io/cluster-issuer',
+      'Watch certificate issue: kubectl get certificate -w',
+      'Test: curl -I https://s.yourdomain.com/abc123',
+    ]},
+    {title:'Phase 5 — Autoscaling',desc:'Handle a viral tweet hitting your service.',tasks:[
+      'Install Metrics Server (needed for HPA)',
+      'Write HPA: minReplicas=2, maxReplicas=20, CPU=60%',
+      'Run load test: k6 run --vus 500 --duration 2m script.js',
+      'Watch scale-out: kubectl get hpa -w',
+      'Add KEDA for Redis queue depth autoscaling (bonus)',
+      'Observe scale-in after load stops (5 min cooldown)',
+    ]},
+  ],
+
+  yamls:[
+    {label:'Deployment',code:`apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-api
+  namespace: url
+  labels:
+    app: url-api
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: url-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # allow 1 extra pod during rollout
+      maxUnavailable: 0    # never take a pod down before a new one is ready
+  template:
+    metadata:
+      labels:
+        app: url-api
+    spec:
+      containers:
+      - name: api
+        image: gcr.io/my-project/url-api:v1.2.0
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: url-config    # inject all ConfigMap keys as env vars
+        - secretRef:
+            name: url-secrets
+        resources:
+          requests:
+            cpu: "100m"         # 0.1 CPU — used for HPA calculations
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        readinessProbe:         # only send traffic when this passes
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:          # restart if this fails 3 times
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15
+          failureThreshold: 3`},
+    {label:'Service + Ingress',code:`apiVersion: v1
+kind: Service
+metadata:
+  name: url-api
+  namespace: url
+spec:
+  selector:
+    app: url-api            # routes to all pods with this label
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP           # internal only — Ingress handles external
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: url-ingress
+  namespace: url
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - s.yourdomain.com
+    secretName: url-tls-cert   # cert-manager writes the cert here
+  rules:
+  - host: s.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: url-api
+            port:
+              number: 80`},
+    {label:'HPA',code:`apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: url-api-hpa
+  namespace: url
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: url-api
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60   # scale when avg CPU > 60%
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30   # react to spikes fast
+    scaleDown:
+      stabilizationWindowSeconds: 300  # don't scale down too quickly`},
+  ],
+
+  commands:[
+    {label:'Create cluster & connect',cmd:`# Create GKE Autopilot cluster (Google manages nodes)
+gcloud container clusters create-auto url-cluster \\
+  --region=us-central1 \\
+  --project=my-project
+
+# Fetch credentials into kubeconfig
+gcloud container clusters get-credentials url-cluster \\
+  --region=us-central1
+
+# Verify you're connected
+kubectl cluster-info
+kubectl get nodes`},
+    {label:'Deploy & verify',cmd:`# Create namespace
+kubectl create namespace url
+
+# Apply all manifests
+kubectl apply -f k8s/ -n url
+
+# Watch pods come up
+kubectl get pods -n url -w
+
+# Check rollout status
+kubectl rollout status deployment/url-api -n url
+
+# Tail logs
+kubectl logs -f deployment/url-api -n url`},
+    {label:'Load test & watch HPA',cmd:`# Install k6 (load testing tool)
+brew install k6
+
+# Run 500 virtual users for 2 minutes
+k6 run --vus 500 --duration 2m loadtest.js
+
+# In another terminal — watch HPA react
+kubectl get hpa url-api-hpa -n url -w
+
+# Watch pods scale out
+kubectl get pods -n url -w`},
+  ]
+},
+
+// ─── BLOB STORAGE ────────────────────────────────────────────
+{
+  id:'blob',icon:'🗄️',title:'BLOB STORAGE',sub:'s3-like · multi-tenant',
+  color:'#b06dff',cborder:'rgba(176,109,255,.45)',cbg:'rgba(176,109,255,.08)',
+  diff:2,dlbl:'Intermediate',
+  desc:'Build an S3-compatible object store backed by GCS. Master PersistentVolumes, StatefulSets, Workload Identity, and multi-tenant RBAC.',
+  tags:[{l:'StatefulSet',c:'#4db8ff'},{l:'PVC',c:'#b06dff'},{l:'RBAC',c:'#ffb830'},{l:'Workload Identity',c:'#a8ff3e'}],
+
+  summary:{
+    tagline:'A multi-tenant, S3-compatible blob storage service with per-team isolation, workload-based GCP auth, and persistent storage backed by GCS.',
+    why:'This study forces you to think about state. Databases and storage systems cannot be treated like stateless APIs — you need StatefulSets, persistent volumes, and careful upgrade strategies. RBAC teaches you the K8s security model.',
+    metrics:[{v:'100TB',l:'storage capacity'},{v:'<50ms',l:'upload latency'},{v:'4',l:'tenants'},{v:'99.99%',l:'durability'}],
+    learns:[
+      'Difference between Deployment and StatefulSet (ordered, stable identity)',
+      'PersistentVolume, PersistentVolumeClaim, and StorageClass lifecycle',
+      'Workload Identity: authenticate to GCP APIs without key files',
+      'RBAC: Roles, ClusterRoles, RoleBindings, ServiceAccounts',
+      'Namespace isolation for multi-tenant environments',
+      'Headless Services for stable DNS to StatefulSet pods',
+    ]
+  },
+
+  arch:`
+  ┌────────────────────────────────────────────────────────────┐
+  │                     GKE CLUSTER                            │
+  │                                                            │
+  │  [API Client] ──→ [Ingress] ──→ [blob-api Deployment]     │
+  │                                        │                   │
+  │                         ┌──────────────┼──────────────┐    │
+  │                         ↓              ↓              ↓    │
+  │                  [GCS Bucket]   [PostgreSQL]    [Redis]    │
+  │                  (objects)      StatefulSet     (presign)  │
+  │                  via Workload   postgres-0       cache     │
+  │                  Identity       postgres-1                 │
+  │                                      │                     │
+  │                               [PVC: ssd-20Gi]              │
+  │                               volumeClaimTemplate          │
+  │                                                            │
+  │  Namespaces:  team-a ns │ team-b ns │ team-c ns            │
+  │  Each with own RoleBinding → can only see own resources    │
+  └────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'💾',name:'StatefulSet',kind:'Workload',kindColor:'#b06dff',
+     sig:'Like Deployment but pods get stable, ordered names (postgres-0, postgres-1) and their own PVCs via volumeClaimTemplates. Pods start and stop in order.',
+     why:'WHY: Databases need stable identities. postgres-0 is always the primary. postgres-1 knows to replicate from postgres-0. This predictability is impossible with Deployments.'},
+    {icon:'📀',name:'PersistentVolume',kind:'Storage',kindColor:'#4db8ff',
+     sig:'A piece of cluster-level storage provisioned from a cloud disk (GCP Persistent Disk, AWS EBS). Lives independently of any Pod.',
+     why:'WHY: Pod storage is ephemeral. When a pod dies, its data dies too — unless it\'s mounted from a PersistentVolume.'},
+    {icon:'📋',name:'PersistentVolumeClaim',kind:'Storage',kindColor:'#a8ff3e',
+     sig:'A Pod\'s request for a PersistentVolume. Specifies size and access mode. The StorageClass dynamically provisions a matching PV.',
+     why:'WHY: Decouples the Pod from the specific disk. The cluster fulfills the claim — dev and prod can use different StorageClasses.'},
+    {icon:'🏷️',name:'StorageClass',kind:'Storage',kindColor:'#ffb830',
+     sig:'Defines the type of storage provisioner (pd-ssd, pd-standard) and reclaim policy. Allows dynamic provisioning on demand.',
+     why:'WHY: Without StorageClass, an admin must manually create every PV. With it, claims are fulfilled automatically.'},
+    {icon:'🆔',name:'ServiceAccount',kind:'Security',kindColor:'#ff4d6d',
+     sig:'An identity for Pods (not humans). Every Pod runs as a ServiceAccount. Used for RBAC permissions and Workload Identity GCP auth.',
+     why:'WHY: Pods need to call K8s API or GCP APIs. ServiceAccounts are their identity. Never use the default SA — always create a dedicated one.'},
+    {icon:'🛡️',name:'RBAC Role',kind:'Security',kindColor:'#b06dff',
+     sig:'Namespace-scoped rules: which verbs (get, list, create, delete) on which resources (pods, secrets). Combined with RoleBinding to grant to a ServiceAccount.',
+     why:'WHY: Principle of least privilege. A blob-api SA should only read Secrets, not delete Deployments. RBAC enforces this at the API server.'},
+    {icon:'🔑',name:'Workload Identity',kind:'GCP',kindColor:'#00e5ff',
+     sig:'Links a K8s ServiceAccount to a GCP Service Account. The Pod gets a GCP identity without any key file mounted. Credentials are short-lived and auto-rotated.',
+     why:'WHY: Storing GCP SA key files in Secrets is a security risk. Workload Identity eliminates the key entirely — no leak surface.'},
+    {icon:'📡',name:'Headless Service',kind:'Network',kindColor:'#4db8ff',
+     sig:'A Service with clusterIP: None. DNS resolves to individual Pod IPs instead of a virtual IP. Clients see postgres-0.postgres, postgres-1.postgres.',
+     why:'WHY: Required for StatefulSets. Clients (like primary-replica setups) need to address individual pods by stable hostname.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — StatefulSet Fundamentals',desc:'Deploy Postgres as a StatefulSet and understand ordered pod management.',tasks:[
+      'Write a StatefulSet for PostgreSQL with volumeClaimTemplates',
+      'Observe pod naming: postgres-0, postgres-1, postgres-2',
+      'Delete postgres-1 — watch it recreate with same name and PVC',
+      'Create a Headless Service: clusterIP: None',
+      'Verify DNS from another pod: nslookup postgres-0.postgres',
+    ]},
+    {title:'Phase 2 — Storage Deep Dive',desc:'Understand PVs, PVCs and StorageClasses.',tasks:[
+      'Create a StorageClass backed by pd-ssd',
+      'Create a PVC: 20Gi, ReadWriteOnce',
+      'Mount it into a Pod at /data',
+      'Write a file, delete the Pod, recreate — verify file persists',
+      'Change Reclaim Policy to Retain and test what happens on PVC delete',
+    ]},
+    {title:'Phase 3 — Workload Identity',desc:'Zero-key-file GCP authentication.',tasks:[
+      'Create a GCP Service Account with roles/storage.objectAdmin',
+      'Create a K8s ServiceAccount in blob namespace',
+      'Annotate KSA with iam.gke.io/gcp-service-account',
+      'Bind GCP SA to K8s SA via IAM policy binding',
+      'Deploy a pod as that KSA and run: gsutil ls gs://my-bucket',
+    ]},
+    {title:'Phase 4 — Multi-Tenant RBAC',desc:'Strict namespace isolation for teams.',tasks:[
+      'Create namespaces: team-a, team-b, team-c',
+      'Create a Role in each: can read/write own Secrets',
+      'Create RoleBinding: bind team-a SA to team-a Role',
+      'Verify: kubectl auth can-i get secrets -n team-b --as system:serviceaccount:team-a:default',
+      'Create a ClusterRole for the blob-api to read across namespaces',
+      'Audit using: kubectl get rolebindings -A',
+    ]},
+  ],
+
+  yamls:[
+    {label:'StatefulSet (PostgreSQL)',code:`apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: blob
+spec:
+  serviceName: "postgres"    # must match headless Service name
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      serviceAccountName: blob-ksa    # Workload Identity SA
+      containers:
+      - name: postgres
+        image: postgres:15
+        env:
+        - name: POSTGRES_DB
+          value: blobstore
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: pg-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:                # each pod gets its own PVC
+  - metadata:
+      name: pg-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: ssd            # your custom StorageClass
+      resources:
+        requests:
+          storage: 20Gi`},
+    {label:'RBAC — Role & RoleBinding',code:`# Role: scoped to team-a namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: team-a-role
+  namespace: team-a
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list", "create", "update"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"]              # can read but NOT delete
+
+---
+# RoleBinding: grant Role to ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: team-a-binding
+  namespace: team-a
+subjects:
+- kind: ServiceAccount
+  name: team-a-sa
+  namespace: team-a
+roleRef:
+  kind: Role
+  name: team-a-role
+  apiGroup: rbac.authorization.k8s.io`},
+    {label:'Workload Identity annotation',code:`# Step 1: K8s ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: blob-ksa
+  namespace: blob
+  annotations:
+    # This annotation links K8s SA to GCP SA
+    iam.gke.io/gcp-service-account: blob-gsa@my-project.iam.gserviceaccount.com
+
+---
+# Step 2: GCP CLI commands to complete the binding
+# (run outside cluster)
+#
+# gcloud iam service-accounts add-iam-policy-binding \\
+#   blob-gsa@my-project.iam.gserviceaccount.com \\
+#   --role roles/iam.workloadIdentityUser \\
+#   --member "serviceAccount:my-project.svc.id.goog[blob/blob-ksa]"`},
+  ],
+  commands:[
+    {label:'StorageClass + PVC',cmd:`# Create SSD StorageClass
+kubectl apply -f - <<'EOF'
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-ssd
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+EOF
+
+# Create PVC
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blob-data
+spec:
+  storageClassName: ssd
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi
+EOF`},
+    {label:'Verify RBAC permissions',cmd:`# Test: can team-a SA access team-b secrets?
+kubectl auth can-i get secrets \\
+  -n team-b \\
+  --as system:serviceaccount:team-a:team-a-sa
+# Expected: no
+
+# List all RoleBindings cluster-wide
+kubectl get rolebindings -A
+
+# Impersonate SA and try real kubectl command
+kubectl get pods -n team-b \\
+  --as system:serviceaccount:team-a:team-a-sa`},
+  ]
+},
+
+// ─── TICKET BOOKING ──────────────────────────────────────────
+{
+  id:'ticket',icon:'🎟️',title:'TICKET BOOKING',sub:'50k concurrent · race-safe',
+  color:'#ffb830',cborder:'rgba(255,184,48,.45)',cbg:'rgba(255,184,48,.08)',
+  diff:2,dlbl:'Intermediate',
+  desc:'50,000 users race to buy the last seat. Learn Jobs, CronJobs, PodDisruptionBudgets, NetworkPolicies, and zero-downtime deployments.',
+  tags:[{l:'Job/CronJob',c:'#ffb830'},{l:'PDB',c:'#4db8ff'},{l:'NetworkPolicy',c:'#a8ff3e'},{l:'Kafka',c:'#b06dff'}],
+
+  summary:{
+    tagline:'A highly available ticket reservation system that handles massive concurrent writes without overselling, using Kubernetes Jobs for async processing.',
+    why:'Ticket booking is deceptively hard — race conditions, double-sells, unhappy customers. This study teaches async processing with Jobs, graceful disruption handling, and zero-downtime rolling updates for a system that cannot afford a moment\'s downtime.',
+    metrics:[{v:'50k',l:'concurrent users'},{v:'0',l:'oversells'},{v:'5min',l:'reservation TTL'},{v:'<100ms',l:'booking p99'}],
+    learns:[
+      'Run one-off tasks and batch jobs with Kubernetes Jobs',
+      'Schedule recurring operations with CronJobs',
+      'Protect availability during node maintenance with PodDisruptionBudgets',
+      'Segment east-west traffic with NetworkPolicies',
+      'Implement graceful shutdown with preStop hooks and terminationGracePeriod',
+      'Blue/green deployments for zero booking downtime',
+    ]
+  },
+
+  arch:`
+  ┌───────────────────────────────────────────────────────────┐
+  │                    GKE CLUSTER                            │
+  │                                                           │
+  │  [User] ──→ [Ingress] ──→ [booking-api Deployment]        │
+  │                                    │                      │
+  │                    ┌───────────────┼───────────────┐      │
+  │                    ↓               ↓               ↓      │
+  │            [PostgreSQL]      [Kafka Topic]    [Redis]     │
+  │            seat inventory    booking-events   seat lock   │
+  │                               │                           │
+  │                ┌──────────────┼──────────────┐            │
+  │                ↓              ↓              ↓            │
+  │         [payment-worker] [email-worker] [analytics]       │
+  │         Deployment        Deployment     CronJob          │
+  │                                                           │
+  │  [CronJob: expire-reservations] runs every 5 minutes      │
+  │  [Job: seat-import] one-time bulk CSV import              │
+  └───────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'⚡',name:'Job',kind:'Workload',kindColor:'#ffb830',
+     sig:'Runs one or more Pods to completion. Retries on failure (backoffLimit). Supports parallel execution (parallelism). Used for one-time tasks like DB migrations or data imports.',
+     why:'WHY: Some workloads are not long-running servers. Jobs give Kubernetes-native run-to-completion semantics with retries, timeouts, and parallelism.'},
+    {icon:'⏰',name:'CronJob',kind:'Workload',kindColor:'#a8ff3e',
+     sig:'Creates Jobs on a cron schedule. Used to expire unpaid reservations every 5 minutes. Uses standard cron syntax (*/5 * * * *).',
+     why:'WHY: Without CronJobs you\'d need an external scheduler or a long-running loop in your app. CronJobs are declarative, auditable, and cluster-managed.'},
+    {icon:'🛡️',name:'PodDisruptionBudget',kind:'Availability',kindColor:'#4db8ff',
+     sig:'Limits how many Pods can be voluntarily disrupted at once (node drain, cluster upgrade). Set minAvailable: 2 to always keep 2 booking-api pods running.',
+     why:'WHY: Without PDB, a `kubectl drain` during a GKE upgrade could terminate all your pods simultaneously, causing downtime.'},
+    {icon:'🔒',name:'NetworkPolicy',kind:'Security',kindColor:'#b06dff',
+     sig:'A firewall for Pod-to-Pod traffic. Default deny-all, then explicitly allow booking-api → postgres, payment-worker → kafka. Works at L3/L4.',
+     why:'WHY: By default, all pods can talk to all other pods. NetworkPolicy enforces least-privilege networking — a compromised pod can\'t reach the payment system.'},
+    {icon:'🩺',name:'ReadinessProbe',kind:'Health',kindColor:'#ff4d6d',
+     sig:'Kubernetes only sends traffic to a Pod once the readinessProbe passes. During startup or when degraded, the pod is temporarily removed from Service endpoints.',
+     why:'WHY: Critical during rolling updates. Without it, traffic hits new pods before they\'ve connected to Kafka and Redis, causing booking errors.'},
+    {icon:'🩹',name:'LivenessProbe',kind:'Health',kindColor:'#ffb830',
+     sig:'Restarts a Pod if the liveness check fails N times. Catches deadlocks and stuck goroutines that don\'t crash but can\'t process requests.',
+     why:'WHY: A deadlocked booking process silently stops accepting bookings. LivenessProbe detects and self-heals this automatically.'},
+    {icon:'🔄',name:'preStop Hook',kind:'Lifecycle',kindColor:'#00e5ff',
+     sig:'A command run inside the container before Kubernetes sends SIGTERM. Used to finish in-flight booking requests before the pod shuts down.',
+     why:'WHY: Without preStop, a mid-booking transaction gets killed. The hook lets the pod drain gracefully: sleep 5 lets the LB remove it from rotation first.'},
+    {icon:'📊',name:'ResourceQuota',kind:'Policy',kindColor:'#a8ff3e',
+     sig:'Limits total resource consumption in a namespace: max 20 pods, 10 CPU, 20Gi memory. Prevents one team from starving another.',
+     why:'WHY: Without quotas, a runaway Job could consume all cluster resources. Quotas are namespace-level capacity management.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Health Probes & Graceful Shutdown',desc:'Make Kubernetes aware of your app lifecycle.',tasks:[
+      'Add readinessProbe: httpGet /ready — only ready when Kafka connected',
+      'Add livenessProbe: httpGet /healthz — restart if DB pool exhausted',
+      'Add preStop hook: sleep 5 to let LB drain before SIGTERM',
+      'Set terminationGracePeriodSeconds: 30',
+      'Simulate deadlock: watch liveness restart the pod automatically',
+    ]},
+    {title:'Phase 2 — Async Jobs',desc:'Process payments and notifications without blocking the booking response.',tasks:[
+      'Deploy Kafka as a StatefulSet with 3 brokers',
+      'Write payment-worker as a Deployment consuming kafka topic',
+      'Create a one-off Job: import seats from CSV file',
+      'Create a CronJob: expire unpaid reservations every 5 minutes',
+      'Simulate job failure: watch backoffLimit retries in kubectl get jobs',
+    ]},
+    {title:'Phase 3 — Zero Downtime Deploys',desc:'Deploy booking-api v2 without losing a single booking.',tasks:[
+      'Set RollingUpdate: maxSurge=1, maxUnavailable=0',
+      'Create PodDisruptionBudget: minAvailable=2',
+      'While k6 runs 1000 VUs, deploy v2: kubectl set image ...',
+      'Verify 0 HTTP errors during rollout',
+      'Test node drain: kubectl drain <node> --ignore-daemonsets',
+      'Watch PDB prevent more than 1 pod eviction at once',
+    ]},
+    {title:'Phase 4 — NetworkPolicy Lockdown',desc:'Strict east-west traffic control.',tasks:[
+      'Apply default-deny-all NetworkPolicy in booking namespace',
+      'Allow booking-api → postgres (port 5432)',
+      'Allow booking-api → kafka (port 9092)',
+      'Allow payment-worker → kafka only',
+      'Verify: kubectl exec random-pod -- nc -zv postgres 5432 — should fail',
+      'Debug: use kubectl exec + nc / nmap / curl to trace connectivity',
+    ]},
+  ],
+
+  yamls:[
+    {label:'CronJob — Expire Reservations',code:`apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: expire-reservations
+  namespace: booking
+spec:
+  schedule: "*/5 * * * *"           # every 5 minutes
+  concurrencyPolicy: Forbid          # don't overlap if previous still running
+  startingDeadlineSeconds: 60        # skip if can't start within 60s
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2                # retry failed jobs up to 2 times
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: expiry-worker
+            image: gcr.io/proj/booking-worker:latest
+            command: ["/app/expire-reservations"]
+            env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: booking-secrets
+                  key: db-host`},
+    {label:'PodDisruptionBudget',code:`apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: booking-pdb
+  namespace: booking
+spec:
+  # Always keep at least 2 pods running
+  # Even during GKE node upgrades or kubectl drain
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: booking-api
+
+# Note: set maxUnavailable instead if you prefer:
+# maxUnavailable: 1  — allow at most 1 pod down at once`},
+    {label:'NetworkPolicy — Default Deny + Allow',code:`# Step 1: Block ALL ingress and egress by default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: booking
+spec:
+  podSelector: {}          # applies to ALL pods in namespace
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Step 2: Allow booking-api to reach postgres only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-booking-to-postgres
+  namespace: booking
+spec:
+  podSelector:
+    matchLabels:
+      app: booking-api
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432`},
+  ],
+  commands:[
+    {label:'Deploy with zero-downtime check',cmd:`# Deploy v2 while load test runs
+kubectl set image deployment/booking-api \\
+  api=gcr.io/proj/booking-api:v2.0.0 -n booking
+
+# Watch rolling update — should see 0% errors
+kubectl rollout status deployment/booking-api -n booking
+
+# Drain a node (simulates GKE upgrade)
+kubectl drain <node-name> \\
+  --ignore-daemonsets \\
+  --delete-emptydir-data
+
+# PDB prevents > 1 pod evicted simultaneously
+kubectl get pdb booking-pdb -n booking`},
+    {label:'Debug NetworkPolicy',cmd:`# Test connectivity (should fail after default-deny)
+kubectl run nettest --image=busybox --rm -it -- \\
+  nc -zv postgres 5432
+
+# Verify NetworkPolicy is applied
+kubectl get networkpolicies -n booking
+
+# Describe to see pod selector details
+kubectl describe networkpolicy default-deny-all -n booking`},
+  ]
+},
+
+// ─── E-COMMERCE ───────────────────────────────────────────────
+{
+  id:'ecom',icon:'🛒',title:'E-COMMERCE',sub:'microservices · service mesh',
+  color:'#a8ff3e',cborder:'rgba(168,255,62,.45)',cbg:'rgba(168,255,62,.08)',
+  diff:3,dlbl:'Advanced',
+  desc:'Full microservices shop with Istio service mesh, canary deployments, mTLS, GitOps via ArgoCD, and progressive delivery with Argo Rollouts.',
+  tags:[{l:'Istio',c:'#a8ff3e'},{l:'Canary',c:'#00e5ff'},{l:'ArgoCD',c:'#b06dff'},{l:'mTLS',c:'#ff4d6d'}],
+
+  summary:{
+    tagline:'A cloud-native e-commerce platform decomposed into 6 independently deployable microservices, managed by Istio service mesh and deployed via GitOps.',
+    why:'Microservices at scale require infrastructure beyond basic K8s. Istio adds observability, security (mTLS), and traffic management that is impossible to implement in application code alone. This study prepares you for real-world platform engineering.',
+    metrics:[{v:'6',l:'microservices'},{v:'mTLS',l:'all comms'},{v:'10%',l:'canary traffic'},{v:'GitOps',l:'deploy model'}],
+    learns:[
+      'Decompose a monolith into independently deployable microservices',
+      'Install and configure Istio service mesh with sidecar injection',
+      'Enforce mTLS between all services using PeerAuthentication',
+      'Implement canary deployments via VirtualService traffic splitting',
+      'Implement GitOps: every cluster change via a Git commit',
+      'Use Argo Rollouts for automated progressive delivery with analysis',
+    ]
+  },
+
+  arch:`
+  ┌───────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER + ISTIO MESH                                     │
+  │                                                               │
+  │  [Browser] ──→ [Istio Gateway] ──→ [VirtualService router]   │
+  │                                           │                   │
+  │         ┌──────────────┬─────────────┬────┴────────┐          │
+  │         ↓              ↓             ↓             ↓          │
+  │   [frontend-v1]  [product-svc]  [cart-svc]  [order-svc]      │
+  │   [frontend-v2]       │              │          │             │
+  │   90% → v1            └──────────────┴──────────┘             │
+  │   10% → v2                           │                        │
+  │                                 [payment-svc]                 │
+  │                                      │                        │
+  │                              [Stripe / GCP Pay]               │
+  │                                                               │
+  │  Every pod has Envoy sidecar injected automatically           │
+  │  All traffic: mTLS encrypted + traced + metered               │
+  │                                                               │
+  │  ArgoCD watches github.com/org/ecom-k8s                       │
+  │  Git push → ArgoCD detects drift → auto-sync to cluster       │
+  └───────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🕸️',name:'Istio Mesh',kind:'Platform',kindColor:'#a8ff3e',
+     sig:'A service mesh that injects an Envoy sidecar proxy into every Pod. The sidecar intercepts all traffic, providing observability, mTLS, retries, timeouts, and circuit breaking — without changing application code.',
+     why:'WHY: At 6+ services, debugging a failed request across the chain is nearly impossible without distributed tracing and traffic metrics that Istio provides out of the box.'},
+    {icon:'🚦',name:'VirtualService',kind:'Istio',kindColor:'#00e5ff',
+     sig:'Istio\'s traffic routing layer. Splits traffic by percentage (canary), matches by headers (A/B testing), sets retries and timeouts per route.',
+     why:'WHY: Enables safe rollouts. Send 10% of traffic to frontend-v2. If error rate stays low, shift to 50%, then 100% — all without redeployment.'},
+    {icon:'🏷️',name:'DestinationRule',kind:'Istio',kindColor:'#b06dff',
+     sig:'Defines traffic policy for a service: load balancing algorithm, mTLS mode, connection pool limits, outlier detection (circuit breaking).',
+     why:'WHY: Circuit breaking at the mesh level prevents a slow downstream service from cascading failures. If payment-svc fails 5 times, stop sending traffic for 30s.'},
+    {icon:'🔐',name:'PeerAuthentication',kind:'Security',kindColor:'#ff4d6d',
+     sig:'Istio policy enforcing mTLS between services. In STRICT mode, all plaintext traffic is rejected — every service must present a valid certificate.',
+     why:'WHY: In a microservices mesh, internal traffic can still be intercepted. mTLS means even a compromised internal pod can\'t read traffic between other services.'},
+    {icon:'🌀',name:'Argo Rollout',kind:'Delivery',kindColor:'#ffb830',
+     sig:'A CRD that replaces Deployment for advanced delivery: canary, blue/green with automated analysis. Integrates with Prometheus to auto-rollback if error rate rises.',
+     why:'WHY: Manual canary (shifting VirtualService weights) requires a human watching dashboards. Argo Rollouts automates the entire progressive delivery pipeline.'},
+    {icon:'🗂️',name:'ArgoCD Application',kind:'GitOps',kindColor:'#a8ff3e',
+     sig:'An ArgoCD CRD that declares: "this cluster should match this Git repo path." ArgoCD continuously syncs the cluster to Git — the repo is the source of truth.',
+     why:'WHY: kubectl apply by hand is not auditable or reproducible. With GitOps, every change has a PR, approval, and commit hash. Rollback = git revert.'},
+    {icon:'📊',name:'ServiceMonitor',kind:'Observability',kindColor:'#4db8ff',
+     sig:'A Prometheus CRD that tells Prometheus which pods to scrape for metrics. Selector matches pods by label. Interval = 15s by default.',
+     why:'WHY: Without metrics, you\'re flying blind. ServiceMonitor is the glue between your app\'s /metrics endpoint and Prometheus dashboards.'},
+    {icon:'🌐',name:'Gateway',kind:'Istio',kindColor:'#00e5ff',
+     sig:'The Istio equivalent of K8s Ingress. Manages inbound/outbound traffic at the mesh boundary. More powerful than Ingress: supports TCP, gRPC, WebSocket.',
+     why:'WHY: Istio Gateway + VirtualService replaces K8s Ingress in a mesh environment, giving you L7 routing with full Istio traffic management features.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Microservice Decomposition',desc:'Split the monolith into independent services.',tasks:[
+      'Deploy 6 services in their own namespaces: frontend, product, cart, order, payment, notification',
+      'Each service has its own Deployment, Service, ConfigMap, ServiceAccount',
+      'Inter-service communication via ClusterIP DNS: product-svc.product.svc.cluster.local',
+      'Write a dependency diagram — identify circular deps',
+      'Verify all services start and can reach each other',
+    ]},
+    {title:'Phase 2 — Istio Installation',desc:'Add the mesh layer to all services.',tasks:[
+      'Install Istio: istioctl install --set profile=demo',
+      'Enable sidecar injection: kubectl label namespace product istio-injection=enabled',
+      'Restart all pods to inject sidecars',
+      'Verify: kubectl describe pod product-api | grep istio-proxy',
+      'Open Kiali UI: istioctl dashboard kiali',
+      'Watch live traffic graph — see real request flows',
+    ]},
+    {title:'Phase 3 — mTLS + Circuit Breaking',desc:'Secure and protect all service communication.',tasks:[
+      'Apply PeerAuthentication STRICT mode to all namespaces',
+      'Verify plaintext rejected: kubectl exec -- curl http://product-svc (should fail)',
+      'Add DestinationRule with outlier detection for payment-svc',
+      'Simulate payment failure: kill payment pod during checkout',
+      'Watch circuit breaker open in Kiali',
+    ]},
+    {title:'Phase 4 — Canary Deploy + GitOps',desc:'Ship frontend-v2 safely and automate everything.',tasks:[
+      'Install ArgoCD, connect to your GitHub repo',
+      'Deploy frontend-v2 alongside v1',
+      'Write VirtualService: 90% v1, 10% v2',
+      'Monitor error rates in Prometheus',
+      'Shift to 50/50, then 100% v2',
+      'Install Argo Rollouts, migrate frontend Deployment to Rollout CRD',
+      'Configure analysis: auto-rollback if error rate > 1%',
+    ]},
+  ],
+
+  yamls:[
+    {label:'Istio VirtualService — Canary',code:`apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  hosts:
+  - frontend-svc
+  http:
+  - name: canary-split
+    route:
+    - destination:
+        host: frontend-svc
+        subset: v1           # DestinationRule defines these subsets
+      weight: 90             # 90% of traffic to stable version
+    - destination:
+        host: frontend-svc
+        subset: v2
+      weight: 10             # 10% canary traffic
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+    timeout: 10s
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  host: frontend-svc
+  trafficPolicy:
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+  subsets:
+  - name: v1
+    labels:
+      version: v1            # matches pods with label version=v1
+  - name: v2
+    labels:
+      version: v2`},
+    {label:'Argo Rollout — Progressive Delivery',code:`apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+  strategy:
+    canary:
+      canaryService: frontend-canary-svc
+      stableService: frontend-stable-svc
+      analysis:
+        templates:
+        - templateName: success-rate    # Prometheus query
+        startingStep: 2
+      steps:
+      - setWeight: 10          # 10% traffic to canary
+      - pause: {duration: 5m}  # wait 5 minutes
+      - setWeight: 30
+      - pause: {duration: 5m}
+      - setWeight: 60
+      - pause: {duration: 5m}
+      - setWeight: 100         # full rollout`},
+    {label:'ArgoCD Application',code:`apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/org/ecom-k8s.git
+    targetRevision: main         # track main branch
+    path: k8s/                   # all YAML lives here
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend
+  syncPolicy:
+    automated:
+      prune: true                # delete resources removed from Git
+      selfHeal: true             # re-apply if someone kubectl edits manually
+    syncOptions:
+    - CreateNamespace=true`},
+  ],
+  commands:[
+    {label:'Install Istio + enable mesh',cmd:`# Install Istio control plane
+istioctl install --set profile=demo -y
+
+# Enable injection for all app namespaces
+for ns in frontend product cart order payment; do
+  kubectl label namespace $ns istio-injection=enabled
+  kubectl rollout restart deployment -n $ns
+done
+
+# Verify sidecars are injected
+kubectl get pods -n product -o jsonpath='{.items[*].spec.containers[*].name}'
+
+# Open dashboards
+istioctl dashboard kiali
+istioctl dashboard grafana
+istioctl dashboard jaeger`},
+    {label:'GitOps workflow',cmd:`# Install ArgoCD
+kubectl create namespace argocd
+kubectl apply -n argocd -f \\
+  https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Get initial admin password
+kubectl get secret argocd-initial-admin-secret \\
+  -n argocd -o jsonpath='{.data.password}' | base64 -d
+
+# Port-forward ArgoCD UI
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Now: push any change to Git → ArgoCD auto-syncs to cluster
+git add k8s/ && git commit -m "feat: bump frontend to v2"
+git push origin main
+# ArgoCD detects drift within 3 minutes and applies changes`},
+  ]
+},
+
+// ─── MESSENGER ────────────────────────────────────────────────
+{
+  id:'msg',icon:'💬',title:'MESSENGER APP',sub:'1M websockets · real-time',
+  color:'#ff4d6d',cborder:'rgba(255,77,109,.45)',cbg:'rgba(255,77,109,.08)',
+  diff:3,dlbl:'Advanced',
+  desc:'WebSocket-based real-time messaging at 1M concurrent connections. Learn CRDs, Operators, VPA, multi-cluster federation, and production observability.',
+  tags:[{l:'CRD + Operator',c:'#ff4d6d'},{l:'Multi-Cluster',c:'#a8ff3e'},{l:'VPA',c:'#b06dff'},{l:'NATS',c:'#ffb830'}],
+
+  summary:{
+    tagline:'A globally distributed real-time messaging system with 1 million concurrent WebSocket connections across two GKE clusters, managed by a custom Kubernetes operator.',
+    why:'This is the capstone. You write your own Kubernetes operator — the same pattern used by databases, ML platforms, and cloud services. You also experience the complexity of multi-cluster coordination, custom resource definitions, and production observability at scale.',
+    metrics:[{v:'1M',l:'concurrent WS'},{v:'2',l:'GKE clusters'},{v:'<50ms',l:'msg delivery'},{v:'custom',l:'CRD operator'}],
+    learns:[
+      'Design and implement a Custom Resource Definition (CRD)',
+      'Build a Kubernetes Operator using the controller-runtime library',
+      'Implement the Reconcile loop with proper error handling and finalizers',
+      'Scale WebSocket connections with Vertical Pod Autoscaler (VPA)',
+      'Federate workloads across two GKE clusters with shared NATS',
+      'Build a production observability stack: Prometheus, Grafana, Jaeger, OTel',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  GLOBAL INFRASTRUCTURE                                           │
+  │                                                                  │
+  │  [Mobile/Web] ──→ [GCP Global Load Balancer]                     │
+  │                    latency-based routing                         │
+  │          ┌─────────────────┴─────────────────┐                  │
+  │          ↓                                   ↓                  │
+  │  ┌───────────────────┐          ┌────────────────────┐           │
+  │  │  us-central1      │          │  europe-west1      │           │
+  │  │  GKE CLUSTER      │          │  GKE CLUSTER       │           │
+  │  │                   │          │                    │           │
+  │  │  [ws-gateway]     │          │  [ws-gateway]      │           │
+  │  │  10k WS/pod       │          │  10k WS/pod        │           │
+  │  │  VPA managed      │          │  VPA managed       │           │
+  │  │       │           │          │       │            │           │
+  │  │  [NATS node]◄─────┼──────────┼──────►[NATS node] │           │
+  │  │  JetStream        │  cluster │  JetStream         │           │
+  │  │       │     gateway│  gossip │       │            │           │
+  │  │  [msg-store]      │          │  [msg-store]       │           │
+  │  │  Cassandra        │          │  Cassandra         │           │
+  │  └───────────────────┘          └────────────────────┘           │
+  │                                                                  │
+  │  Custom Operator: ChatRoom CRD → reconciles pod allocation       │
+  └──────────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'📐',name:'Custom Resource Definition',kind:'Extensibility',kindColor:'#ff4d6d',
+     sig:'Extends the Kubernetes API with your own resource types. After applying the CRD, you can kubectl apply -f chatroom.yaml just like any built-in resource. The schema is validated by the API server.',
+     why:'WHY: ChatRoom is a domain concept, not a generic K8s resource. CRDs let you model your domain in Kubernetes — your operator then manages it like K8s manages Pods.'},
+    {icon:'🤖',name:'Kubernetes Operator',kind:'Extensibility',kindColor:'#b06dff',
+     sig:'A controller that watches custom resources and reconciles reality to the desired state. Built using controller-runtime. Implements Reconcile(ctx, req) → (Result, error).',
+     why:'WHY: An Operator encodes operational knowledge in code. Creating a ChatRoom resource automatically provisions the pods, Redis channel, and DNS entry — like magic.'},
+    {icon:'📏',name:'VPA',kind:'Autoscale',kindColor:'#ffb830',
+     sig:'Vertical Pod Autoscaler sets CPU and memory requests/limits automatically based on actual usage history. Complements HPA — HPA scales out, VPA scales up.',
+     why:'WHY: WebSocket pods with 10k connections need significantly more memory than idle pods. VPA continuously right-sizes them so you neither OOM nor waste money.'},
+    {icon:'🌍',name:'Multi-Cluster',kind:'Platform',kindColor:'#a8ff3e',
+     sig:'Running GKE workloads across two or more clusters for redundancy, latency, and compliance. Requires federated identity, cross-cluster DNS, and shared messaging (NATS).',
+     why:'WHY: A single cluster failure would disconnect all users. Two clusters in different regions provides geographic redundancy with < 30s failover.'},
+    {icon:'📡',name:'NATS JetStream',kind:'Messaging',kindColor:'#4db8ff',
+     sig:'A cloud-native pub/sub system that runs on Kubernetes as a StatefulSet. JetStream adds persistence. Cross-cluster NATS gateway enables message relay between regions.',
+     why:'WHY: WebSocket connections are pinned to a specific pod. When user A (us) sends to user B (eu), NATS relays the message across the cluster boundary.'},
+    {icon:'🔍',name:'OpenTelemetry',kind:'Observability',kindColor:'#00e5ff',
+     sig:'A vendor-neutral instrumentation framework. OTel SDK in each service emits traces, metrics, and logs. The OTel Collector aggregates and forwards to Jaeger/Prometheus/Loki.',
+     why:'WHY: With 1M connections across 2 clusters, you need distributed traces to debug a message that took 800ms. OTel gives you the full picture.'},
+    {icon:'📉',name:'Finalizer',kind:'Lifecycle',kindColor:'#ff4d6d',
+     sig:'A marker on a resource that prevents deletion until your operator has run cleanup logic. The operator removes the finalizer after cleanup, then K8s deletes the resource.',
+     why:'WHY: If a ChatRoom is deleted without cleanup, orphaned pods and Redis channels remain forever. Finalizers ensure your operator cleans up before the resource disappears.'},
+    {icon:'🏥',name:'PodMonitor',kind:'Observability',kindColor:'#a8ff3e',
+     sig:'A Prometheus CRD (like ServiceMonitor but for individual pods). Scrapes metrics from ws-gateway pods: active_connections, messages_per_second, memory_per_connection.',
+     why:'WHY: Active WebSocket connections is the key metric. PodMonitor feeds it to Prometheus, which powers the Grafana dashboard and triggers HPA/VPA adjustments.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — WebSocket Scaling',desc:'Understand the unique challenges of scaling stateful connections.',tasks:[
+      'Deploy ws-gateway: single pod handles 10k WebSocket connections',
+      'Add sessionAffinity: ClientIP to the Service (sticky sessions)',
+      'Load test with Artillery: 50k concurrent WS connections',
+      'Observe OOMKill — then add VPA in Auto mode',
+      'Watch VPA increase memory requests based on usage',
+      'Understand why HPA is tricky with WS (connection count ≠ CPU)',
+    ]},
+    {title:'Phase 2 — Custom CRD + Operator',desc:'Write your own Kubernetes operator.',tasks:[
+      'Scaffold with Kubebuilder: kubebuilder init + create api',
+      'Define ChatRoom CRD spec: participants, maxSize, region',
+      'Implement Reconcile: ChatRoom created → allocate ws-gateway pods',
+      'Add Status conditions: Ready, Degraded, Provisioning',
+      'Add finalizer: ChatRoom deleted → drain connections first',
+      'Deploy operator and create your first ChatRoom resource',
+    ]},
+    {title:'Phase 3 — Multi-Cluster NATS Federation',desc:'Messages flow across cluster boundaries.',tasks:[
+      'Create second GKE cluster in europe-west1',
+      'Deploy NATS JetStream on both clusters',
+      'Configure NATS gateway for cross-cluster message relay',
+      'Test: publish message from us-pod, subscribe on eu-pod',
+      'Configure GCP Global Load Balancer with latency routing',
+      'Simulate region failure: set us cluster health check to fail',
+      'Verify eu cluster takes all traffic within 30s',
+    ]},
+    {title:'Phase 4 — Production Observability',desc:'See everything that happens in your system.',tasks:[
+      'Install kube-prometheus-stack: Prometheus + Grafana + AlertManager',
+      'Build Grafana dashboard: active connections, msg/s, p99 latency per region',
+      'Set alerts: page if p99 > 200ms for 5 minutes',
+      'Install Jaeger for distributed tracing',
+      'Instrument ws-gateway with OTel SDK: trace every message path',
+      'Install Loki for log aggregation across both clusters',
+    ]},
+  ],
+
+  yamls:[
+    {label:'ChatRoom CRD',code:`apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: chatrooms.messaging.io
+spec:
+  group: messaging.io
+  names:
+    kind: ChatRoom
+    listKind: ChatRoomList
+    plural: chatrooms
+    singular: chatroom
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required: [name, maxSize]
+            properties:
+              name:
+                type: string
+              maxSize:
+                type: integer
+                minimum: 2
+                maximum: 10000
+              region:
+                type: string
+                enum: [us-central1, europe-west1]
+          status:
+            type: object
+            properties:
+              phase:
+                type: string   # Pending, Active, Degraded
+              activeConnections:
+                type: integer`},
+    {label:'Operator Reconcile (Go)',code:`// ChatRoomReconciler — Kubebuilder generated scaffold
+func (r *ChatRoomReconciler) Reconcile(
+    ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+
+  log := log.FromContext(ctx)
+
+  // 1. Fetch the ChatRoom resource
+  room := &messagingv1.ChatRoom{}
+  if err := r.Get(ctx, req.NamespacedName, room); err != nil {
+    return ctrl.Result{}, client.IgnoreNotFound(err)
+  }
+
+  // 2. Handle deletion — run cleanup before K8s deletes
+  if !room.DeletionTimestamp.IsZero() {
+    if controllerutil.ContainsFinalizer(room, "messaging.io/cleanup") {
+      r.drainConnections(ctx, room)  // graceful disconnect
+      controllerutil.RemoveFinalizer(room, "messaging.io/cleanup")
+      r.Update(ctx, room)
+    }
+    return ctrl.Result{}, nil
+  }
+
+  // 3. Add finalizer on first reconcile
+  controllerutil.AddFinalizer(room, "messaging.io/cleanup")
+
+  // 4. Reconcile desired state — ensure pod exists
+  pod := r.buildPodForRoom(room)
+  if err := r.Create(ctx, pod); err != nil {
+    room.Status.Phase = "Degraded"
+  } else {
+    room.Status.Phase = "Active"
+    room.Status.ActiveConnections = 0
+  }
+
+  // 5. Update status
+  r.Status().Update(ctx, room)
+  log.Info("Reconciled ChatRoom", "name", room.Name)
+  return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+}`},
+    {label:'VPA + NATS StatefulSet',code:`# Vertical Pod Autoscaler for ws-gateway
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: ws-gateway-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ws-gateway
+  updatePolicy:
+    updateMode: "Auto"    # Automatically evict + restart with new resources
+  resourcePolicy:
+    containerPolicies:
+    - containerName: gateway
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 4
+        memory: 8Gi       # Each WS connection uses ~8KB memory
+
+---
+# NATS JetStream StatefulSet (simplified)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats
+spec:
+  serviceName: nats
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: nats
+        image: nats:2.10-alpine
+        args:
+        - -js                    # enable JetStream
+        - -cluster               # enable clustering
+        - nats://0.0.0.0:6222
+        ports:
+        - containerPort: 4222    # client connections
+        - containerPort: 6222    # cluster gossip
+        - containerPort: 7422    # gateway to other clusters`},
+  ],
+  commands:[
+    {label:'Scaffold Operator with Kubebuilder',cmd:`# Install Kubebuilder
+curl -L -o kubebuilder "https://github.com/kubernetes-sigs/kubebuilder/releases/latest/download/kubebuilder_linux_amd64"
+chmod +x kubebuilder && mv kubebuilder /usr/local/bin/
+
+# Scaffold the operator project
+mkdir messenger-operator && cd messenger-operator
+kubebuilder init --domain messaging.io --repo github.com/you/messenger-operator
+
+# Create the ChatRoom CRD + controller
+kubebuilder create api \\
+  --group chat \\
+  --version v1 \\
+  --kind ChatRoom \\
+  --resource --controller
+
+# Generate CRD manifests from Go types
+make manifests generate
+
+# Install CRD into cluster
+make install
+
+# Run operator locally (watching the cluster)
+make run`},
+    {label:'Multi-cluster setup + observability',cmd:`# Create second cluster
+gcloud container clusters create-auto msg-eu \\
+  --region=europe-west1
+
+# Install Prometheus stack on both clusters
+helm install prom-stack \\
+  prometheus-community/kube-prometheus-stack \\
+  --namespace monitoring --create-namespace \\
+  --set grafana.adminPassword=changeme \\
+  --set prometheus.prometheusSpec.retention=30d
+
+# Install Jaeger
+kubectl apply -f https://github.com/jaegertracing/jaeger-operator/releases/latest/download/jaeger-operator.yaml -n observability
+
+# Access dashboards
+kubectl port-forward svc/prom-stack-grafana 3000:80 -n monitoring
+kubectl port-forward svc/jaeger-query 16686:16686 -n observability`},
+  ]
+},
+
+// ─── VIDEO STREAMING ─────────────────────────────────────────
+{
+  id:'video',icon:'📹',title:'VIDEO STREAMING',sub:'netflix-like · adaptive bitrate',
+  color:'#4db8ff',cborder:'rgba(77,184,255,.45)',cbg:'rgba(77,184,255,.08)',
+  diff:3,dlbl:'Advanced',
+  desc:'Build a Netflix-like video streaming platform with transcoding pipelines, CDN integration, and DaemonSets for node-level video processing.',
+  tags:[{l:'DaemonSet',c:'#4db8ff'},{l:'InitContainer',c:'#ffb830'},{l:'PriorityClass',c:'#a8ff3e'},{l:'GPU Node Pool',c:'#b06dff'}],
+
+  summary:{
+    tagline:'An adaptive bitrate video streaming platform with GPU-accelerated transcoding, distributed CDN caching, and priority-based workload scheduling.',
+    why:'Video transcoding is the ultimate resource-intensive workload. This case study teaches DaemonSets for node-level agents, GPU node pools for accelerated workloads, PriorityClasses for workload ordering, and InitContainers for startup sequencing.',
+    metrics:[{v:'4K',l:'max resolution'},{v:'GPU',l:'accelerated'},{v:'HLS/DASH',l:'adaptive'},{v:'<2s',l:'start time'}],
+    learns:[
+      'Run agents on every node using DaemonSets (log collectors, GPU drivers)',
+      'Use InitContainers to ensure dependencies are ready before app starts',
+      'Schedule GPU workloads on specialized node pools with taints and tolerations',
+      'Prioritize critical workloads over batch jobs with PriorityClasses',
+      'Manage long-running batch processing with Job parallelism',
+      'Integrate with GCP Cloud CDN for global content delivery',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER + GPU NODE POOL                                 │
+  │                                                              │
+  │  [Upload] ──→ [upload-api] ──→ [GCS raw bucket]             │
+  │                                      │                       │
+  │                               [Transcoding Job]              │
+  │                               GPU Node Pool                  │
+  │                               nvidia-tesla-t4               │
+  │                               parallelism=4                  │
+  │                                      │                       │
+  │                         ┌────────────┼────────────┐          │
+  │                         ↓            ↓            ↓          │
+  │                      [360p]       [720p]       [1080p]       │
+  │                         └────────────┼────────────┘          │
+  │                                      ↓                       │
+  │                              [GCS output bucket]             │
+  │                              [Cloud CDN] ──→ [User]          │
+  │                                                              │
+  │  DaemonSet: nvidia-device-plugin on every GPU node           │
+  │  DaemonSet: fluent-bit log collector on every node           │
+  │  InitContainer: wait for GCS bucket before transcoder starts │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'👁️',name:'DaemonSet',kind:'Workload',kindColor:'#4db8ff',
+     sig:'Ensures one Pod runs on every (or selected) node. Used for GPU device plugins, log collectors (Fluent Bit), monitoring agents (Node Exporter), and network plugins.',
+     why:'WHY: Some workloads are node-local by nature. The NVIDIA device plugin must run on every GPU node to advertise GPUs to the scheduler. A Deployment can\'t express "one per node."'},
+    {icon:'🔧',name:'InitContainer',kind:'Lifecycle',kindColor:'#ffb830',
+     sig:'Runs to completion before app containers start. Used to wait for dependencies, copy config files, or check connectivity. If InitContainer fails, the Pod restarts.',
+     why:'WHY: The transcoder must not start until the GCS bucket exists and the DB schema is migrated. InitContainers enforce this ordering without complex startup logic in app code.'},
+    {icon:'⚖️',name:'PriorityClass',kind:'Scheduling',kindColor:'#a8ff3e',
+     sig:'Assigns a priority integer to Pods. High-priority Pods preempt (evict) lower-priority ones if the cluster is under resource pressure.',
+     why:'WHY: Live stream transcoding (user-visible) must not be starved by background batch re-encoding jobs. PriorityClass: live-stream=1000, batch=100 ensures this.'},
+    {icon:'🎯',name:'Taint & Toleration',kind:'Scheduling',kindColor:'#b06dff',
+     sig:'Taints mark nodes to repel Pods. Tolerations let Pods opt-in to tainted nodes. GPU nodes are tainted nvidia.com/gpu=present:NoSchedule to prevent non-GPU pods from landing there.',
+     why:'WHY: GPU nodes are expensive. Without taints, any pod could land on them. Taints ensure only the transcoder (with the toleration) uses GPU nodes.'},
+    {icon:'📌',name:'NodeAffinity',kind:'Scheduling',kindColor:'#00e5ff',
+     sig:'Rules that attract or repel Pods from certain nodes based on labels. requiredDuringScheduling is hard (pod fails if unmet), preferredDuringScheduling is soft.',
+     why:'WHY: Combined with taints, NodeAffinity ensures the transcoder lands on nodes with cloud.google.com/gke-accelerator=nvidia-tesla-t4.'},
+    {icon:'🧩',name:'LimitRange',kind:'Policy',kindColor:'#ffb830',
+     sig:'Sets default and maximum resource limits for Pods in a namespace. If a Pod doesn\'t specify limits, LimitRange applies the default.',
+     why:'WHY: Without LimitRange, a developer who forgets to set resource requests gets an unlimited Pod that starves neighbors. LimitRange provides namespace-wide safety nets.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — GPU Node Pool & DaemonSet',desc:'Set up GPU infrastructure.',tasks:[
+      'Create GPU node pool: n1-standard-8 + nvidia-tesla-t4',
+      'Install NVIDIA device plugin as a DaemonSet',
+      'Verify GPU advertised: kubectl get nodes -o json | grep nvidia.com/gpu',
+      'Deploy a test CUDA pod with toleration for GPU taint',
+      'Run nvidia-smi inside the pod — see the GPU',
+    ]},
+    {title:'Phase 2 — Transcoding Pipeline',desc:'Process video uploads with parallel Jobs.',tasks:[
+      'Write upload-api: receives video → stores in GCS raw bucket',
+      'Write transcoding Job with parallelism=4 (4 resolutions at once)',
+      'Add InitContainer: wait for GCS bucket to be reachable',
+      'Add GPU resource request: nvidia.com/gpu: 1',
+      'Monitor Job progress: kubectl get jobs -w',
+    ]},
+    {title:'Phase 3 — PriorityClass & Scheduling',desc:'Ensure live streams beat batch jobs.',tasks:[
+      'Create PriorityClass: live-stream, value=1000',
+      'Create PriorityClass: batch-transcode, value=100',
+      'Assign PriorityClasses to respective Job templates',
+      'Simulate cluster pressure: fill cluster with batch jobs',
+      'Submit a live-stream job — watch it preempt batch pods',
+    ]},
+    {title:'Phase 4 — CDN Integration',desc:'Deliver video globally at low latency.',tasks:[
+      'Enable Cloud CDN on GCS output bucket backend',
+      'Write video-api: generates signed GCS URLs with 1hr expiry',
+      'Configure Cache-Control headers for HLS manifests vs segments',
+      'Test cache hit rate in GCP Console → Load Balancing → CDN',
+      'Set up cache invalidation on new transcoded output',
+    ]},
+  ],
+
+  yamls:[
+    {label:'GPU Transcoding Job',code:`apiVersion: batch/v1
+kind: Job
+metadata:
+  name: transcode-video-abc123
+  namespace: transcoding
+spec:
+  parallelism: 4         # process all 4 resolutions simultaneously
+  completions: 4
+  backoffLimit: 2
+  template:
+    spec:
+      priorityClassName: live-stream   # preempts batch jobs
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-gcs             # ensure source file is ready
+        image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+        command: ['sh', '-c',
+          'until gsutil ls gs://raw-bucket/abc123.mp4; do sleep 2; done']
+      containers:
+      - name: transcoder
+        image: gcr.io/proj/transcoder:latest
+        resources:
+          limits:
+            nvidia.com/gpu: 1     # request 1 GPU
+            memory: "8Gi"
+          requests:
+            nvidia.com/gpu: 1
+            cpu: "4"
+        env:
+        - name: INPUT_PATH
+          value: gs://raw-bucket/abc123.mp4
+        - name: OUTPUT_BUCKET
+          value: gs://transcoded-bucket
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"     # allow scheduling on GPU-tainted nodes
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-tesla-t4`},
+    {label:'DaemonSet — Fluent Bit Log Collector',code:`apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: logging
+spec:
+  selector:
+    matchLabels:
+      app: fluent-bit
+  template:
+    metadata:
+      labels:
+        app: fluent-bit
+    spec:
+      serviceAccountName: fluent-bit
+      tolerations:                   # run on ALL nodes, including GPU nodes
+      - operator: Exists
+      containers:
+      - name: fluent-bit
+        image: fluent/fluent-bit:2.2
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log        # access node's log directory
+          readOnly: true
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log             # mounts the NODE filesystem
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers`},
+  ],
+  commands:[
+    {label:'Create GPU node pool',cmd:`gcloud container node-pools create gpu-pool \\
+  --cluster=video-cluster \\
+  --region=us-central1 \\
+  --num-nodes=2 \\
+  --machine-type=n1-standard-8 \\
+  --accelerator=type=nvidia-tesla-t4,count=1 \\
+  --node-taints=nvidia.com/gpu=present:NoSchedule
+
+# Install NVIDIA device plugin DaemonSet
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+
+# Verify GPU node is ready
+kubectl get nodes -l cloud.google.com/gke-accelerator=nvidia-tesla-t4`},
+  ]
+},
+
+// ─── ML PLATFORM ─────────────────────────────────────────────
+{
+  id:'ml',icon:'🧠',title:'ML PLATFORM',sub:'model training · inference at scale',
+  color:'#ff9f43',cborder:'rgba(255,159,67,.45)',cbg:'rgba(255,159,67,.08)',
+  diff:3,dlbl:'Advanced',
+  desc:'A Kubeflow-based MLOps platform for training, versioning, and serving ML models at scale with auto-scaling inference endpoints.',
+  tags:[{l:'Kubeflow',c:'#ff9f43'},{l:'GPU Scheduling',c:'#b06dff'},{l:'Model Serving',c:'#a8ff3e'},{l:'Pipeline CRD',c:'#4db8ff'}],
+
+  summary:{
+    tagline:'An end-to-end MLOps platform on GKE: data preprocessing, distributed training on GPU clusters, model versioning, and auto-scaling inference with Triton Server.',
+    why:'Machine learning infrastructure is one of the fastest-growing use cases for Kubernetes. Kubeflow brings the same declarative, cloud-native patterns to ML workflows. This study teaches resource-intensive scheduling, custom resource patterns, and serving infrastructure.',
+    metrics:[{v:'GPU',l:'distributed training'},{v:'<50ms',l:'inference p99'},{v:'A/B',l:'model testing'},{v:'auto',l:'scaling inference'}],
+    learns:[
+      'Schedule GPU training jobs with gang scheduling (all-or-nothing allocation)',
+      'Use Kubeflow Pipelines CRDs: Pipeline, Experiment, Run',
+      'Serve multiple model versions simultaneously with traffic splitting',
+      'Autoscale inference pods based on GPU utilization with custom metrics',
+      'Implement model A/B testing using Istio traffic management',
+      'Store and version ML artifacts using GCS with structured paths',
+    ]
+  },
+
+  arch:`
+  ┌────────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — ML PLATFORM                                    │
+  │                                                               │
+  │  [Data Scientists] ──→ [Kubeflow Dashboard]                   │
+  │                               │                               │
+  │                    [KFP Pipeline Controller]                  │
+  │                               │                               │
+  │         ┌─────────────────────┼─────────────────────┐         │
+  │         ↓                     ↓                     ↓         │
+  │   [preprocess Job]    [train TFJob/PyTorchJob]  [evaluate]    │
+  │   CPU node pool       GPU node pool             CPU           │
+  │                       4x T4 GPUs                              │
+  │         └─────────────────────┼─────────────────────┘         │
+  │                               ↓                               │
+  │                        [GCS Model Store]                      │
+  │                        models/v1, v2, v3                      │
+  │                               │                               │
+  │                    [InferenceService CRD]                     │
+  │                    Triton Inference Server                     │
+  │                    model-v1 (80%) / model-v2 (20%)            │
+  └────────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🔬',name:'TFJob / PyTorchJob',kind:'Kubeflow CRD',kindColor:'#ff9f43',
+     sig:'Custom CRDs from Kubeflow Training Operator. Define distributed training topologies: parameter servers and workers, or all-reduce with PyTorch DDP. The operator manages Pod creation, failure recovery, and cleanup.',
+     why:'WHY: Distributed ML training requires coordination between dozens of GPU pods. The Training Operator handles the complex lifecycle management so data scientists write just the training code.'},
+    {icon:'🚂',name:'KFP Pipeline',kind:'Kubeflow CRD',kindColor:'#4db8ff',
+     sig:'Kubeflow Pipeline orchestrates ML workflows as DAGs. Each step is a containerized component. The Pipeline CRD stores the DAG definition; Run CRD tracks executions.',
+     why:'WHY: ML workflows (preprocess → train → evaluate → deploy) need dependency management, artifact passing, and run history. KFP provides this as a K8s-native workflow engine.'},
+    {icon:'🎯',name:'InferenceService',kind:'KServe CRD',kindColor:'#a8ff3e',
+     sig:'KServe CRD for model serving. Specifies the model framework, storage URI (gs://), and autoscaling parameters. Automatically provisions the inference server Pod and Service.',
+     why:'WHY: Model serving needs auto-scaling (to zero!), canary between versions, and hardware-specific scheduling. InferenceService encodes all of this in a single declarative resource.'},
+    {icon:'📦',name:'Gang Scheduling',kind:'Scheduling',kindColor:'#b06dff',
+     sig:'A scheduling plugin (Volcano / Scheduler Plugins) that ensures all pods of a Job are scheduled simultaneously. Prevents partial scheduling where 3 of 4 GPU pods start and wait forever for the 4th.',
+     why:'WHY: A distributed training job with 4 GPU workers is useless if only 3 workers get scheduled. Gang scheduling is all-or-nothing, preventing deadlocks and wasted GPU time.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Kubeflow Install',desc:'Set up the ML platform.',tasks:[
+      'Install Kubeflow on GKE using manifests or kfctl',
+      'Access the Kubeflow Central Dashboard',
+      'Create a Notebook Server (JupyterLab) with GPU',
+      'Connect to GCS for data storage',
+      'Verify: create a simple pipeline run',
+    ]},
+    {title:'Phase 2 — Distributed Training',desc:'Train a model across multiple GPU pods.',tasks:[
+      'Write a PyTorchJob YAML: 1 master, 3 workers, each with T4 GPU',
+      'Submit training job: kubectl apply -f pytorch-job.yaml',
+      'Monitor: kubectl get pytorchjob -w',
+      'Stream logs from master pod',
+      'Retrieve trained model from GCS output path',
+    ]},
+    {title:'Phase 3 — Model Serving',desc:'Deploy model as auto-scaling inference endpoint.',tasks:[
+      'Install KServe on the cluster',
+      'Write InferenceService CRD pointing to GCS model path',
+      'Test: curl the inference endpoint with sample data',
+      'Deploy model-v2 with 20% traffic split for A/B testing',
+      'Configure scale-to-zero: inference scales down when idle',
+    ]},
+    {title:'Phase 4 — Full MLOps Pipeline',desc:'End-to-end from data to deployment.',tasks:[
+      'Write a 4-step KFP Pipeline: ingest → preprocess → train → deploy',
+      'Parameterize: learning rate, batch size, model name as pipeline params',
+      'Set up recurring Run: retrain weekly on fresh data',
+      'Implement model quality gate: only deploy if accuracy > 95%',
+      'Monitor model drift using Prometheus custom metrics',
+    ]},
+  ],
+
+  yamls:[
+    {label:'PyTorchJob — Distributed Training',code:`apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: image-classifier-training
+  namespace: ml-platform
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          containers:
+          - name: pytorch
+            image: gcr.io/proj/trainer:latest
+            args: ["--epochs=50", "--batch-size=256"]
+            resources:
+              limits:
+                nvidia.com/gpu: 1
+                memory: "16Gi"
+            volumeMounts:
+            - name: model-output
+              mountPath: /output
+          volumes:
+          - name: model-output
+            emptyDir: {}         # synced to GCS via sidecar
+          tolerations:
+          - key: nvidia.com/gpu
+            operator: Exists
+            effect: NoSchedule
+    Worker:
+      replicas: 3              # 3 worker GPUs + 1 master = 4 GPU total
+      restartPolicy: OnFailure
+      template:
+        spec:
+          containers:
+          - name: pytorch
+            image: gcr.io/proj/trainer:latest
+            resources:
+              limits:
+                nvidia.com/gpu: 1`},
+    {label:'InferenceService — Model A/B',code:`apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: image-classifier
+  namespace: ml-platform
+  annotations:
+    serving.kserve.io/deploymentMode: Serverless  # scale to zero
+spec:
+  predictor:
+    canaryTrafficPercent: 20     # 20% of traffic goes to canary
+    pytorch:
+      storageUri: gs://models/image-classifier/v2
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+  # Implicitly the remaining 80% goes to:
+  # storageUri: gs://models/image-classifier/v1
+  transformer:
+    containers:
+    - image: gcr.io/proj/preprocessor:latest
+      name: preprocessor`},
+  ],
+  commands:[
+    {label:'Submit training job + monitor',cmd:`# Apply the PyTorchJob
+kubectl apply -f pytorch-job.yaml -n ml-platform
+
+# Watch job status
+kubectl get pytorchjob -n ml-platform -w
+
+# Stream master pod logs
+kubectl logs -f \\
+  $(kubectl get pods -n ml-platform -l job-name=image-classifier-training,replica-type=master -o name) \\
+  -n ml-platform
+
+# Get final model accuracy from logs
+kubectl logs job/image-classifier-training-master-0 \\
+  -n ml-platform | grep "Final accuracy"`},
+  ]
+},
+
+// ─── API GATEWAY ─────────────────────────────────────────────
+{
+  id:'gateway',icon:'🚀',title:'API GATEWAY',sub:'rate limiting · auth · routing',
+  color:'#a8ff3e',cborder:'rgba(168,255,62,.4)',cbg:'rgba(168,255,62,.07)',
+  diff:2,dlbl:'Intermediate',
+  desc:'Build a production API Gateway with rate limiting, JWT auth, circuit breaking, and multi-version routing using Kong or custom middleware.',
+  tags:[{l:'Kong / Envoy',c:'#a8ff3e'},{l:'Rate Limiting',c:'#ffb830'},{l:'JWT Auth',c:'#ff4d6d'},{l:'Circuit Breaker',c:'#4db8ff'}],
+
+  summary:{
+    tagline:'A production-grade API Gateway serving as the single entry point for 50+ microservices with authentication, rate limiting, and observability built in.',
+    why:'Every microservices architecture needs a gateway. This study teaches advanced Ingress patterns, Envoy proxy configuration, API versioning strategies, and the critical pattern of cross-cutting concerns (auth, rate limiting, logging) as infrastructure rather than application code.',
+    metrics:[{v:'50+',l:'upstream services'},{v:'10k',l:'RPS per key'},{v:'JWT',l:'auth method'},{v:'<5ms',l:'gateway overhead'}],
+    learns:[
+      'Deploy Kong or Envoy as a programmable API gateway on K8s',
+      'Implement JWT authentication as a gateway plugin (no app code changes)',
+      'Configure rate limiting per API key at the infrastructure level',
+      'Route traffic by API version (/v1/, /v2/) to different upstream services',
+      'Implement circuit breaking to protect upstream services',
+      'Collect per-endpoint metrics automatically via gateway telemetry',
+    ]
+  },
+
+  arch:`
+  ┌────────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — API GATEWAY                                     │
+  │                                                                │
+  │  [API Clients] ──→ [GCP Load Balancer]                         │
+  │                           │                                    │
+  │                    [Kong / Envoy]                              │
+  │                    ┌──────┴──────┐                             │
+  │                    │  Plugins:   │                             │
+  │                    │  - JWT Auth │                             │
+  │                    │  - Rate Lmt │                             │
+  │                    │  - CORS     │                             │
+  │                    │  - Logging  │                             │
+  │                    └──────┬──────┘                             │
+  │                           │                                    │
+  │         ┌─────────────────┼──────────────────┐                 │
+  │         ↓                 ↓                  ↓                 │
+  │   [/v1/ → svc-v1]  [/v2/ → svc-v2]  [/admin/ → admin-svc]    │
+  │   [/api/users/]    [/api/products/]  [/api/orders/]            │
+  └────────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🔀',name:'Kong Ingress',kind:'Gateway',kindColor:'#a8ff3e',
+     sig:'Kong on K8s uses CRDs (KongPlugin, KongIngress, KongConsumer) to configure gateway behavior declaratively. Plugins attach to Ingress or Service resources.',
+     why:'WHY: Moving auth, rate-limiting, and logging into the gateway means your microservices contain only business logic. Updates to these policies require no code changes — just YAML.'},
+    {icon:'⏱️',name:'RateLimitPlugin',kind:'Kong CRD',kindColor:'#ffb830',
+     sig:'Kong plugin that limits requests per consumer (API key or JWT sub). Configurable per minute/hour/day. Uses Redis for distributed counters across gateway replicas.',
+     why:'WHY: Without rate limiting at the gateway, a single misbehaving client or DDoS can saturate your entire backend. Gateway-level rate limiting is the first line of defense.'},
+    {icon:'🔑',name:'JWTPlugin',kind:'Kong CRD',kindColor:'#ff4d6d',
+     sig:'Kong plugin that validates JWT tokens on every request. Extracts claims, blocks invalid tokens, and passes user identity to upstream as headers (X-User-ID).',
+     why:'WHY: Validating JWTs in every microservice is duplicated error-prone code. One gateway plugin replaces hundreds of lines across dozens of services.'},
+    {icon:'🔌',name:'Circuit Breaker',kind:'Resilience',kindColor:'#4db8ff',
+     sig:'Envoy/Kong feature that tracks error rates to upstream services. When errors exceed threshold, it "opens" the circuit: requests fail fast without hitting the backend.',
+     why:'WHY: If orders-service is degraded (500s), the gateway stops sending new requests, letting it recover instead of getting hammered. Prevents cascading failures.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Kong Installation',desc:'Deploy Kong as your cluster gateway.',tasks:[
+      'Install Kong via Helm: helm install kong kong/ingress',
+      'Verify Kong pod + proxy service running',
+      'Create a simple KongIngress routing /api → backend-svc',
+      'Test: curl http://<external-ip>/api/hello',
+      'Enable Kong Admin API (internal only!)',
+    ]},
+    {title:'Phase 2 — Auth & Rate Limiting',desc:'Add cross-cutting concerns as plugins.',tasks:[
+      'Create KongPlugin resource: jwt (validates Bearer tokens)',
+      'Attach jwt plugin to the /api Ingress',
+      'Create KongConsumer + KongPlugin: rate-limiting (100/min)',
+      'Test: valid JWT passes, invalid returns 401',
+      'Test: exceed rate limit, see 429 Too Many Requests',
+    ]},
+    {title:'Phase 3 — Multi-Version Routing',desc:'Support v1 and v2 APIs simultaneously.',tasks:[
+      'Deploy svc-v1 and svc-v2 as separate Deployments',
+      'Create Ingress rules: /v1/ → svc-v1, /v2/ → svc-v2',
+      'Add deprecation header to /v1/ responses via plugin',
+      'Implement sunset date: return 410 Gone for /v1/ after date',
+      'Test canary: 5% of /v2/ traffic goes to svc-v3 (preview)',
+    ]},
+    {title:'Phase 4 — Gateway Observability',desc:'Every request metered and traced.',tasks:[
+      'Enable Kong Prometheus plugin: per-route request metrics',
+      'Enable Kong OpenTelemetry plugin: traces to Jaeger',
+      'Build Grafana dashboard: RPS, error rate, latency per route',
+      'Set alert: latency p99 > 500ms for 2 consecutive minutes',
+      'Enable request/response logging to Cloud Logging',
+    ]},
+  ],
+
+  yamls:[
+    {label:'Kong Plugins — JWT + Rate Limiting',code:`# JWT Authentication Plugin
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: jwt-auth
+  namespace: gateway
+plugin: jwt
+config:
+  secret_is_base64: false
+  key_claim_name: kid          # JWT header field for key lookup
+  claims_to_verify:
+  - exp                        # verify token not expired
+
+---
+# Rate Limiting Plugin (per consumer, uses Redis)
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rate-limit-standard
+  namespace: gateway
+plugin: rate-limiting
+config:
+  minute: 100                  # 100 requests per minute
+  hour: 5000
+  policy: redis                # distributed counter via Redis
+  redis_host: redis.gateway.svc.cluster.local
+  hide_client_headers: false   # show X-RateLimit-* headers to clients
+
+---
+# Apply plugins to Ingress via annotation
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: gateway
+  annotations:
+    konghq.com/plugins: jwt-auth,rate-limit-standard
+spec:
+  ingressClassName: kong
+  rules:
+  - host: api.yourdomain.com
+    http:
+      paths:
+      - path: /v2/
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v2-svc
+            port:
+              number: 80`},
+  ],
+  commands:[
+    {label:'Install Kong + verify',cmd:`# Add Kong Helm repo
+helm repo add kong https://charts.konghq.com
+helm repo update
+
+# Install Kong Ingress Controller
+helm install kong kong/ingress \\
+  --namespace kong --create-namespace \\
+  --set controller.ingressController.enabled=true \\
+  --set proxy.type=LoadBalancer
+
+# Wait for external IP
+kubectl get svc -n kong kong-proxy -w
+
+# Test gateway is live
+curl -I http://$(kubectl get svc kong-proxy -n kong \\
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')/`},
+  ]
+},
+
+// ─── FINTECH ─────────────────────────────────────────────────
+{
+  id:'fintech',icon:'💳',title:'FINTECH PAYMENTS',sub:'PCI-DSS · zero-trust · audit',
+  color:'#ff6b9d',cborder:'rgba(255,107,157,.45)',cbg:'rgba(255,107,157,.08)',
+  diff:3,dlbl:'Expert',
+  desc:'A PCI-DSS compliant payment processing system on GKE. Master GKE Private Clusters, Binary Authorization, OPA Gatekeeper policy enforcement, and security hardening.',
+  tags:[{l:'Private Cluster',c:'#ff6b9d'},{l:'Binary Authorization',c:'#4db8ff'},{l:'OPA Gatekeeper',c:'#a8ff3e'},{l:'Audit Logging',c:'#ffb830'}],
+
+  summary:{
+    tagline:'A PCI-DSS Level 1 compliant payment microservice on GKE with zero-trust networking, image signing, policy enforcement, and immutable audit trails.',
+    why:'Security is not optional in fintech. This capstone study teaches the hardest part of Kubernetes: locking it down for regulated industries. Every concept — private clusters, Binary Authorization, OPA, Pod Security — exists to prevent a breach that would affect millions of users.',
+    metrics:[{v:'PCI-DSS',l:'Level 1 compliant'},{v:'Zero',l:'public IPs'},{v:'Signed',l:'all images'},{v:'100%',l:'audit coverage'}],
+    learns:[
+      'Deploy a GKE Private Cluster with no public node IPs',
+      'Enforce image signing with Binary Authorization (only signed images run)',
+      'Write and enforce OPA Gatekeeper policies across the cluster',
+      'Apply Pod Security Standards (Restricted) to block privilege escalation',
+      'Enable GKE audit logging to Cloud Logging for compliance',
+      'Implement Secret Manager integration instead of K8s Secrets for PAN data',
+    ]
+  },
+
+  arch:`
+  ┌────────────────────────────────────────────────────────────────┐
+  │  GKE PRIVATE CLUSTER — ZERO PUBLIC IPs                        │
+  │                                                                │
+  │  [Internet] ──→ [Cloud Armor WAF]                              │
+  │                        │ (only allowed IPs)                    │
+  │                 [Internal Load Balancer]                       │
+  │                        │                                       │
+  │           [payment-api — Restricted PSS]                       │
+  │                        │                                       │
+  │            ┌───────────┼───────────┐                           │
+  │            ↓           ↓           ↓                           │
+  │     [Secret Manager] [Pub/Sub]  [Cloud Spanner]                │
+  │     (card data)    (events)    (transactions)                  │
+  │                                                                │
+  │  Binary Authorization: only gcr.io/proj/* signed images        │
+  │  OPA Gatekeeper: no root containers, no hostNetwork            │
+  │  All audit logs → Cloud Logging → immutable bucket             │
+  └────────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🔒',name:'Private GKE Cluster',kind:'Infrastructure',kindColor:'#ff6b9d',
+     sig:'GKE cluster where nodes have only private IPs. No direct internet access. Egress via Cloud NAT. Masters accessible only via VPC peering or Authorized Networks.',
+     why:'WHY: PCI-DSS requirement 1.3: prohibit direct public access to the cardholder data environment. Private clusters ensure nodes can never be directly reached from the internet.'},
+    {icon:'✍️',name:'Binary Authorization',kind:'Security',kindColor:'#4db8ff',
+     sig:'GCP service that requires container images to be signed by a trusted attestor before K8s admits them. Unsigned images are rejected at admission time.',
+     why:'WHY: Prevents supply chain attacks. Even if an attacker pushes a malicious image to your registry, Binary AuthZ prevents it from ever running in your cluster.'},
+    {icon:'📜',name:'OPA Gatekeeper',kind:'Policy',kindColor:'#a8ff3e',
+     sig:'A policy engine (validating webhook) that evaluates REGO policies against every K8s API request. Can block, mutate, or audit resource creation based on policy.',
+     why:'WHY: Enforces security guardrails cluster-wide. Policy: "no container may run as root." Even if a developer forgets, the admission webhook blocks the deployment.'},
+    {icon:'🛡️',name:'Pod Security Standards',kind:'Security',kindColor:'#ffb830',
+     sig:'Built-in K8s security profiles: Privileged (no restrictions), Baseline (minimal), Restricted (hardened). Applied per namespace via labels.',
+     why:'WHY: Restricted PSS blocks: root users, privilege escalation, hostNetwork/hostPID, unsafe capabilities. These are the most common container escape vectors.'},
+    {icon:'📋',name:'Audit Policy',kind:'Compliance',kindColor:'#ff6b9d',
+     sig:'K8s API server config that logs every request: who called what API, what was the response. Configurable verbosity per resource type. Essential for PCI-DSS audit trails.',
+     why:'WHY: PCI-DSS requirement 10: "Implement audit trails to link all access to system components." Without audit logs, you can\'t prove who accessed cardholder data.'},
+    {icon:'🗝️',name:'Secret Manager CSI',kind:'Secrets',kindColor:'#00e5ff',
+     sig:'GCP Secret Manager integration that mounts secrets as files in Pods via CSI driver. Secrets are never stored in etcd — they\'re fetched at runtime from Secret Manager.',
+     why:'WHY: K8s Secrets are base64-encoded in etcd (not encrypted by default). For PAN data, you must use a proper secrets manager with key rotation and access audit logs.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Private Cluster',desc:'No public IPs, ever.',tasks:[
+      'Create GKE private cluster: --enable-private-nodes --enable-private-endpoint',
+      'Configure Authorized Networks for master access (your VPN IP)',
+      'Set up Cloud NAT for egress internet access from nodes',
+      'Verify: kubectl get nodes shows only private IPs',
+      'Confirm: nodes cannot be SSH\'d from internet',
+    ]},
+    {title:'Phase 2 — Binary Authorization',desc:'Only signed images run.',tasks:[
+      'Enable Binary Authorization on the GKE cluster',
+      'Create Attestor: payment-attester with Cloud KMS key pair',
+      'Sign images in CI/CD: gcloud artifacts sign-blob',
+      'Write policy: require attestation from payment-attester',
+      'Test: deploy unsigned image — should be rejected by API server',
+    ]},
+    {title:'Phase 3 — OPA Gatekeeper Policies',desc:'Enforce security rules as code.',tasks:[
+      'Install Gatekeeper: kubectl apply -f gatekeeper.yaml',
+      'Write ConstraintTemplate: NoRootContainer (deny runAsUser: 0)',
+      'Write ConstraintTemplate: RequiredLabels (all pods need app + env label)',
+      'Write ConstraintTemplate: NoPrivilegedContainers',
+      'Apply constraints and test: deploy a root container — should fail',
+      'Run audit: kubectl get constraint — see violations in status',
+    ]},
+    {title:'Phase 4 — Audit & Compliance',desc:'Full audit trail for PCI-DSS.',tasks:[
+      'Enable GKE audit logs in Cloud Logging',
+      'Configure audit policy: log all Secrets reads at RequestResponse level',
+      'Set up log sink to immutable GCS bucket (Object Versioning)',
+      'Write Cloud Monitoring alert: any Secret read outside business hours',
+      'Generate compliance report: all secret access in last 30 days',
+    ]},
+  ],
+
+  yamls:[
+    {label:'OPA ConstraintTemplate — No Root',code:`apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: norootcontainer
+spec:
+  crd:
+    spec:
+      names:
+        kind: NoRootContainer
+  targets:
+  - target: admission.k8s.gatekeeper.sh
+    rego: |
+      package norootcontainer
+
+      violation[{"msg": msg}] {
+        # Check every container in the pod spec
+        container := input.review.object.spec.containers[_]
+
+        # Violation if runAsUser is 0 (root)
+        container.securityContext.runAsUser == 0
+
+        msg := sprintf("Container '%v' must not run as root (UID 0)", [container.name])
+      }
+
+      violation[{"msg": msg}] {
+        container := input.review.object.spec.containers[_]
+
+        # Also violation if runAsNonRoot is not set to true
+        not container.securityContext.runAsNonRoot == true
+
+        msg := sprintf("Container '%v' must set runAsNonRoot: true", [container.name])
+      }
+
+---
+# Apply the constraint to all namespaces
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: NoRootContainer
+metadata:
+  name: deny-root-containers
+spec:
+  enforcementAction: deny      # block at admission (use "warn" for audit-only)
+  match:
+    kinds:
+    - apiGroups: [""]
+      kinds: ["Pod"]
+    excludedNamespaces:        # never block system namespaces
+    - kube-system
+    - gatekeeper-system`},
+    {label:'Restricted Pod Security + SecretManager',code:`# Namespace with Restricted Pod Security Standard
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+  labels:
+    # Enforce Restricted PSS — blocks: root, hostNetwork, privilege escalation
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+
+---
+# SecretStore — connects to GCP Secret Manager via CSI
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: payment-secrets
+  namespace: payments
+spec:
+  provider: gcp
+  parameters:
+    secrets: |
+      - resourceName: "projects/my-proj/secrets/db-password/versions/latest"
+        fileName: "db-password"
+      - resourceName: "projects/my-proj/secrets/stripe-key/versions/latest"
+        fileName: "stripe-api-key"
+
+---
+# Pod using CSI Secret Volume (never stored in etcd)
+spec:
+  volumes:
+  - name: secrets-vol
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: payment-secrets
+  containers:
+  - name: payment-api
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: [ALL]`},
+  ],
+  commands:[
+    {label:'Create private cluster + Binary AuthZ',cmd:`# Create private GKE cluster
+gcloud container clusters create payments-cluster \\
+  --enable-private-nodes \\
+  --enable-private-endpoint \\
+  --master-ipv4-cidr=172.16.0.0/28 \\
+  --enable-master-authorized-networks \\
+  --master-authorized-networks=$(curl -s ifconfig.me)/32 \\
+  --enable-binary-authorization \\
+  --region=us-central1
+
+# Create attestor for image signing
+gcloud container binauthz attestors create payment-attester \\
+  --attestation-authority-note=projects/my-proj/notes/payment-note \\
+  --attestation-authority-note-project=my-proj
+
+# Sign an image
+gcloud artifacts sign-blob \\
+  --keyversion=projects/my-proj/locations/global/keyRings/binauthz/cryptoKeyVersions/1 \\
+  --input-file=image-digest.txt \\
+  --signature-file=image.sig`},
+    {label:'Test OPA policies',cmd:`# Install Gatekeeper
+kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
+
+# Apply your ConstraintTemplates and Constraints
+kubectl apply -f constraints/
+
+# Test: try to deploy a root container (should be REJECTED)
+kubectl run root-test \\
+  --image=nginx \\
+  --overrides='{"spec":{"securityContext":{"runAsUser":0}}}' \\
+  -n payments
+# Error from server: admission webhook "validation.gatekeeper.sh" denied
+
+# Audit existing violations
+kubectl get notrootcontainer deny-root-containers \\
+  -o json | jq '.status.violations'`},
+  ]
+},
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let activeId = null;
+let activeTab = 'summary';
+let checked = {};
+let openPhases = {};
+
+const ranks = [
+  [0,'🌱 Cluster Newbie'],
+  [200,'🔧 Pod Pilot'],
+  [500,'⚙️ YAML Engineer'],
+  [1000,'🚀 K8s Engineer'],
+  [2000,'🛡️ Platform Engineer'],
+  [3500,'🏆 Cluster Architect'],
+];
+
+function getRank(xp) {
+  let r = ranks[0][1];
+  for (const [min,name] of ranks) if (xp >= min) r = name;
+  return r;
+}
+
+function totalTasks() {
+  return CASES.reduce((s,c) => s + c.phases.reduce((s2,p) => s2 + p.tasks.length, 0), 0);
+}
+function doneCount() { return Object.values(checked).filter(Boolean).length; }
+function xpCount() { return doneCount() * 75; }
+
+function updateXP() {
+  const xp = xpCount();
+  const done = doneCount();
+  const total = totalTasks();
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpVal').textContent = xp.toLocaleString() + ' XP';
+  document.getElementById('xpRank').textContent = getRank(xp);
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER CARDS
+// ══════════════════════════════════════════════════════════════
+function renderCards() {
+  document.getElementById('caseGrid').innerHTML = CASES.map(c => {
+    const bars = Array.from({length:3},(_,i) => `<div class="dbar${i<c.diff?' on':''}"></div>`).join('');
+    const tags = c.tags.map(t => `<span class="ctag" style="color:${t.c};border-color:${t.c}44;background:${t.c}0d">${t.l}</span>`).join('');
+    return `<div class="ccard${activeId===c.id?' sel':''}" 
+      style="--cc:${c.cbg};--cc-border:${c.cborder}"
+      onclick="selectCase('${c.id}')">
+      <div class="cc-top">
+        <div class="cc-ico" style="background:${c.cbg};color:${c.color}">${c.icon}</div>
+        <div><div class="cc-name" style="color:${c.color}">${c.title}</div>
+        <div class="cc-sub">${c.sub}</div></div>
+      </div>
+      <div class="cc-desc">${c.desc}</div>
+      <div class="cc-tags">${tags}</div>
+      <div class="cc-foot">
+        <div class="cc-diff">${bars}<span class="dlbl">${c.dlbl}</span></div>
+        <button class="cc-btn">${activeId===c.id?'Opened ↑':'Open →'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SELECT CASE
+// ══════════════════════════════════════════════════════════════
+function selectCase(id) {
+  if (activeId === id) { activeId = null; document.getElementById('detailPanel').classList.remove('on'); renderCards(); return; }
+  activeId = id;
+  activeTab = 'summary';
+  renderCards();
+  renderDetail();
+  setTimeout(() => document.getElementById('detailPanel').scrollIntoView({behavior:'smooth',block:'start'}), 50);
+}
+
+function switchTab(t) { activeTab = t; renderDetail(); }
+
+function togglePhase(key, e) {
+  e.stopPropagation();
+  openPhases[key] = !openPhases[key];
+  const el = document.getElementById('ph-'+key);
+  if (el) { el.classList.toggle('open', openPhases[key]); }
+}
+
+function toggleTask(key, e) {
+  e.stopPropagation();
+  checked[key] = !checked[key];
+  const row = document.getElementById('tr-'+key);
+  const tck = document.getElementById('tc-'+key);
+  if (row) row.classList.toggle('done-row', checked[key]);
+  if (tck) { tck.classList.toggle('done', checked[key]); tck.textContent = checked[key] ? '✓' : ''; }
+  updateXP();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER DETAIL
+// ══════════════════════════════════════════════════════════════
+function renderDetail() {
+  const c = CASES.find(x => x.id === activeId);
+  if (!c) return;
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('on');
+  panel.style.setProperty('--d-accent', c.color);
+
+  const tabs = ['summary','blocks','phases','yaml','commands'].map(t =>
+    `<div class="tab${activeTab===t?' on':''}" onclick="switchTab('${t}')">${
+      {summary:'Executive Summary',blocks:'Building Blocks',phases:'Hands-On Phases',yaml:'YAML Reference',commands:'Commands'}[t]
+    }</div>`).join('');
+
+  let body = '';
+
+  // ── SUMMARY ──
+  if (activeTab === 'summary') {
+    const m = c.summary;
+    body = `
+    <div class="exec-bar">
+      <p class="exec-para">${m.tagline}</p>
+      <p class="exec-para">${m.why}</p>
+    </div>
+    <div class="highlight-row">
+      ${m.metrics.map(x=>`<div class="hl-chip" style="border-color:${c.color}33;background:${c.cbg}"><b style="color:${c.color}">${x.v}</b><span>${x.l}</span></div>`).join('')}
+    </div>
+    <div class="exec-grid">
+      <div class="exec-card">
+        <div class="ec-label">What You Will Build</div>
+        <div class="ec-val">${c.title}: ${c.sub}</div>
+      </div>
+      <div class="exec-card">
+        <div class="ec-label">Difficulty Level</div>
+        <div class="ec-val big" style="color:${c.color}">${c.dlbl}</div>
+      </div>
+    </div>
+    <div class="exec-card" style="margin-bottom:16px">
+      <div class="ec-label">K8s Concepts You Will Master</div>
+      <ul class="learn-list" style="margin-top:10px">
+        ${m.learns.map(l=>`<li>${l}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="exec-bar">
+      <div class="ec-label" style="margin-bottom:12px">System Architecture Overview</div>
+      <div class="arch-box"><pre>${c.arch}</pre></div>
+    </div>`;
+  }
+
+  // ── BUILDING BLOCKS ──
+  if (activeTab === 'blocks') {
+    body = `<div class="bb-grid">${c.blocks.map(b=>`
+      <div class="bb-card">
+        <div class="bb-head">
+          <span class="bb-icon">${b.icon}</span>
+          <span class="bb-name">${b.name}</span>
+          <span class="bb-kind" style="color:${b.kindColor};border-color:${b.kindColor}44;background:${b.kindColor}0d">${b.kind}</span>
+        </div>
+        <div class="bb-body">
+          <p class="bb-sig">${b.sig}</p>
+          <div class="bb-why" style="color:${c.color};background:${c.cbg};border-color:${c.color}22">${b.why}</div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  // ── PHASES ──
+  if (activeTab === 'phases') {
+    body = `<div class="phase-list">${c.phases.map((p,pi)=>{
+      const k = `${c.id}-${pi}`;
+      const isOpen = !!openPhases[k];
+      return `<div class="phase${isOpen?' open':''}" id="ph-${k}">
+        <div class="phase-hdr" onclick="togglePhase('${k}',event)">
+          <div class="ph-num" style="background:${c.cbg};border-color:${c.color}44;color:${c.color}">${String(pi+1).padStart(2,'0')}</div>
+          <div class="ph-info">
+            <div class="ph-title">${p.title}</div>
+            <div class="ph-desc">${p.desc}</div>
+          </div>
+          <div class="ph-chev">▶</div>
+        </div>
+        <div class="phase-body">
+          ${p.tasks.map((t,ti)=>{
+            const tk = `${k}-${ti}`;
+            const done = !!checked[tk];
+            return `<div class="task-row${done?' done-row':''}" id="tr-${tk}">
+              <div class="tck${done?' done':''}" id="tc-${tk}" onclick="toggleTask('${tk}',event)">${done?'✓':''}</div>
+              <span class="tck-text">${t}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  // ── YAML ──
+  if (activeTab === 'yaml') {
+    body = c.yamls.map(y=>`
+      <div class="yaml-section">
+        <div class="ys-label">${y.label}</div>
+        <div class="code-block"><div class="cb-label">yaml</div><pre>${y.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/(#[^\n]*)/g,'<span class="cm">$1</span>')
+          .replace(/\b(apiVersion|kind|metadata|spec|name|namespace|labels|selector|template|containers|image|ports|env|resources|limits|requests|replicas|strategy|type|volumeMounts|volumes|rules|subjects|roleRef|schedule|config|annotations|matchLabels|matchExpressions|operator|values|key|effect|tolerations|affinity|nodeAffinity|podAffinity)\b(?=:)/g,'<span class="ky">$1</span>')
+        }</pre></div>
+      </div>`).join('');
+  }
+
+  // ── COMMANDS ──
+  if (activeTab === 'commands') {
+    body = c.commands.map(cmd=>`
+      <div class="yaml-section">
+        <div class="ys-label">${cmd.label}</div>
+        <div class="code-block"><div class="cb-label">bash</div><pre>${cmd.cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/(#[^\n]*)/g,'<span class="cm">$1</span>')
+          .replace(/\b(kubectl|gcloud|helm|istioctl|kubebuilder|k6|curl|gsutil|make)\b/g,'<span class="op">$1</span>')
+          .replace(/(--[\w-]+=?)/g,'<span class="kw">$1</span>')
+          .replace(/\b(apply|get|create|delete|describe|logs|exec|run|scale|rollout|label|annotate|drain|patch|set|port-forward|install|upgrade|init)\b/g,'<span class="vl">$1</span>')
+        }</pre></div>
+      </div>`).join('');
+  }
+
+  panel.innerHTML = `
+    <div class="d-hero" style="border-bottom-color:${c.color}33">
+      <span class="d-ico">${c.icon}</span>
+      <div class="d-info">
+        <div class="d-title" style="color:${c.color}">${c.title}</div>
+        <div class="d-sub">${c.sub} · ${c.dlbl}</div>
+      </div>
+      <button class="d-close" onclick="selectCase('${c.id}')">✕</button>
+    </div>
+    <div class="tabs">${tabs}</div>
+    <div class="d-body">${body}</div>`;
+}
+
+// INIT
+renderCards();
+updateXP();
+</script>
+</body>
+</html>

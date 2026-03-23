@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-api
+  namespace: url
+  labels:
+    app: url-api
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: url-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # allow 1 extra pod during rollout
+      maxUnavailable: 0    # never take a pod down before a new one is ready
+  template:
+    metadata:
+      labels:
+        app: url-api
+    spec:
+      containers:
+      - name: api
+        image: gcr.io/my-project/url-api:v1.2.0
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: url-config    # inject all ConfigMap keys as env vars
+        - secretRef:
+            name: url-secrets
+        resources:
+          requests:
+            cpu: "100m"         # 0.1 CPU — used for HPA calculations
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        readinessProbe:         # only send traffic when this passes
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:          # restart if this fails 3 times
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15
+          failureThreshold: 3
