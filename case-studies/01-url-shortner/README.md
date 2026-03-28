@@ -36,7 +36,7 @@ Difficulty Level: Beginner
   │          ┌─────────────┴──────────────┐                 │
   │          ↓                            ↓                 │
   │   [url-api Deployment]        [redirect-api]            │
-  │   3 replicas → HPA(3-20)      1 replica                 │
+  │   3 replicas → HPA(3-20)         1 replica              │
   │          │                            │                 │
   │          └──────────┬─────────────────┘                 │
   │                     ↓                                   │

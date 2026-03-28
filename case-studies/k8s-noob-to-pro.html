@@ -241,7 +241,7 @@ h1 .g3{color:var(--lime);text-shadow:0 0 60px rgba(168,255,62,.3)}
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow"><span class="live-dot"></span>Google Kubernetes Engine · Hands-On Track · 8 Case Studies</div>
+  <div class="hero-eyebrow"><span class="live-dot"></span>Google Kubernetes Engine · Hands-On Track · 15 Case Studies</div>
   <h1><span class="g1">K8S</span><br><span class="g2">NOOB</span> <span class="g3">→ PRO</span></h1>
   <p class="hero-sub">Learn by building real production systems. Every case study reveals deeper Kubernetes primitives — from your first Pod to multi-cluster operators.</p>
 </div>
@@ -254,7 +254,7 @@ h1 .g3{color:var(--lime);text-shadow:0 0 60px rgba(168,255,62,.3)}
   <div class="xp-rank" id="xpRank">🌱 Cluster Newbie</div>
 </div>
 
-<div class="sec-hdr"><span>Choose Your Mission · 8 Case Studies</span></div>
+<div class="sec-hdr"><span>Choose Your Mission · 15 Case Studies</span></div>
 <div class="case-grid" id="caseGrid"></div>
 <div class="detail" id="detailPanel"></div>
 
@@ -2251,6 +2251,1376 @@ kubectl get notrootcontainer deny-root-containers \\
   -o json | jq '.status.violations'`},
   ]
 },
+
+// ─── IOT DATA PIPELINE ───────────────────────────────────────
+{
+  id:'iot',icon:'📡',title:'IOT DATA PIPELINE',sub:'1M sensors · edge to cloud',
+  color:'#39d98a',cborder:'rgba(57,217,138,.45)',cbg:'rgba(57,217,138,.08)',
+  diff:2,dlbl:'Intermediate',
+  desc:'Ingest telemetry from 1 million IoT sensors, process in real-time with Apache Flink on K8s, and archive to BigQuery. Learn KEDA, resource limits, and edge node pools.',
+  tags:[{l:'KEDA',c:'#39d98a'},{l:'Flink Operator',c:'#4db8ff'},{l:'DaemonSet',c:'#ffb830'},{l:'ResourceQuota',c:'#b06dff'}],
+
+  summary:{
+    tagline:'A cloud-native IoT data platform ingesting 1 million sensor readings per second, processing them with Apache Flink on GKE, and storing results in BigQuery.',
+    why:'IoT workloads expose the bursty, unpredictable nature of real-world data. This study teaches event-driven autoscaling with KEDA, streaming computation on K8s, and how to manage heterogeneous node pools for edge vs. cloud workloads.',
+    metrics:[{v:'1M/s',l:'sensor events'},{v:'<500ms',l:'processing lag'},{v:'KEDA',l:'autoscaling'},{v:'BigQuery',l:'sink'}],
+    learns:[
+      'Scale consumers based on Kafka lag (not CPU) using KEDA',
+      'Deploy Apache Flink as a K8s Operator for stateful stream processing',
+      'Use node pool taints to isolate edge workloads from cloud workloads',
+      'Apply ResourceQuotas to prevent IoT processing from starving other tenants',
+      'Implement dead-letter queues for malformed sensor payloads',
+      'Monitor streaming lag with Prometheus and Grafana',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — IOT PIPELINE                                  │
+  │                                                              │
+  │  [1M Sensors] ──→ [IoT Core / MQTT broker]                   │
+  │                           │                                  │
+  │                    [Kafka StatefulSet]                       │
+  │                    topic: sensor-raw                         │
+  │                           │                                  │
+  │              ┌────────────┴────────────┐                     │
+  │              ↓                         ↓                     │
+  │     [Flink JobManager]        [KEDA ScaledObject]            │
+  │     [Flink TaskManagers]      scales consumers on lag        │
+  │     stateful stream proc                                     │
+  │              │                                               │
+  │    ┌─────────┴──────────┐                                    │
+  │    ↓                    ↓                                    │
+  │ [BigQuery sink]   [Redis anomaly cache]                      │
+  │ (archive)         (real-time alerts)                         │
+  │                                                              │
+  │  DaemonSet: mqtt-proxy on edge node pool                     │
+  │  ResourceQuota: iot ns capped at 20 CPU / 40Gi               │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'📏',name:'KEDA ScaledObject',kind:'Autoscale',kindColor:'#39d98a',
+     sig:'Kubernetes Event Driven Autoscaler. Scales Deployments based on external metrics: Kafka consumer lag, SQS queue depth, Prometheus queries, Redis list length. Scales to zero when idle.',
+     why:'WHY: CPU-based HPA is useless for queue consumers. If Kafka lag grows to 5M messages, you need more consumers — regardless of CPU. KEDA reads the lag and scales accordingly.'},
+    {icon:'🌊',name:'Flink Operator',kind:'Streaming',kindColor:'#4db8ff',
+     sig:'A Kubernetes Operator (CRD) for running Apache Flink. Manages JobManager/TaskManager lifecycle, checkpoint storage, high availability, and job restart on failure.',
+     why:'WHY: Running Flink manually on K8s is complex. The operator codifies all operational knowledge: checkpointing to GCS, HA via ZooKeeper, and automatic job recovery.'},
+    {icon:'🏷️',name:'ResourceQuota',kind:'Policy',kindColor:'#b06dff',
+     sig:'Namespace-level cap on total resource consumption: CPU, memory, pod count, PVC count. Prevents one namespace from consuming all cluster resources.',
+     why:'WHY: The IoT pipeline can generate massive bursts. Without a quota, a sensor storm could consume all cluster CPU and starve the payment service running in another namespace.'},
+    {icon:'🔀',name:'LimitRange',kind:'Policy',kindColor:'#ffb830',
+     sig:'Sets per-pod/container default and maximum resource values within a namespace. If a developer deploys without resource requests, LimitRange applies sensible defaults.',
+     why:'WHY: Flink TaskManagers without memory limits will OOMKill the node. LimitRange ensures every container in the IoT namespace has safe boundaries even if the manifest omits them.'},
+    {icon:'☠️',name:'Dead Letter Topic',kind:'Pattern',kindColor:'#ff4d6d',
+     sig:'A secondary Kafka topic where malformed or unprocessable sensor messages are routed instead of crashing the consumer. A separate repair consumer processes them offline.',
+     why:'WHY: One corrupt sensor payload should not halt processing for 999,999 healthy sensors. Dead-lettering isolates bad data while keeping the happy path flowing.'},
+    {icon:'🌐',name:'Edge Node Pool',kind:'Infrastructure',kindColor:'#39d98a',
+     sig:'A dedicated GKE node pool with smaller machines (e2-medium) placed in edge locations. Tainted so only the MQTT proxy DaemonSet lands there, not heavy Flink workers.',
+     why:'WHY: Edge nodes receive raw sensor data and should be geographically close to sensors for low latency. They must not run heavy workloads that would saturate their limited resources.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Kafka & Ingestion',desc:'Build the high-throughput message backbone.',tasks:[
+      'Deploy Kafka as a 3-broker StatefulSet using Strimzi Operator',
+      'Create topic sensor-raw with 12 partitions (for parallelism)',
+      'Deploy MQTT broker (Eclipse Mosquitto) as a Deployment',
+      'Write sensor-ingestor: MQTT → Kafka bridge',
+      'Simulate 10k sensors with a load generator Job',
+      'Monitor Kafka consumer lag: kafka-consumer-groups.sh',
+    ]},
+    {title:'Phase 2 — KEDA Autoscaling',desc:'Scale consumers based on queue depth, not CPU.',tasks:[
+      'Install KEDA: helm install keda kedacore/keda',
+      'Write ScaledObject targeting sensor-raw Kafka topic',
+      'Set lagThreshold: 1000 (scale up per 1000 messages of lag)',
+      'Watch consumers auto-scale during simulated burst',
+      'Watch consumers scale to 1 (not 0 — Kafka needs at least 1)',
+      'Compare: old HPA vs KEDA response time during spike',
+    ]},
+    {title:'Phase 3 — Flink Stream Processing',desc:'Stateful real-time analytics on the sensor stream.',tasks:[
+      'Install Flink Kubernetes Operator via Helm',
+      'Write a FlinkDeployment CRD: 1 JobManager, 4 TaskManagers',
+      'Implement Flink job: windowed aggregation (avg temp per sensor/minute)',
+      'Configure checkpointing to GCS every 30 seconds',
+      'Simulate TaskManager failure — watch Flink recover from checkpoint',
+    ]},
+    {title:'Phase 4 — ResourceQuotas & Limits',desc:'Multi-tenant resource governance.',tasks:[
+      'Create ResourceQuota in iot namespace: 20 CPU, 40Gi memory, 50 pods',
+      'Create LimitRange: default request 100m CPU / 256Mi, max 2 CPU / 4Gi',
+      'Deploy a pod without resource specs — verify LimitRange applies defaults',
+      'Try to exceed quota — see ResourceQuota admission error',
+      'Set up Prometheus alert: namespace CPU usage > 80% of quota',
+    ]},
+  ],
+
+  yamls:[
+    {label:'KEDA ScaledObject — Kafka Lag',code:`apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sensor-consumer-scaler
+  namespace: iot
+spec:
+  scaleTargetRef:
+    name: sensor-consumer          # Deployment to scale
+  minReplicaCount: 1               # never scale to 0 for Kafka
+  maxReplicaCount: 50
+  cooldownPeriod: 60               # seconds before scale-down
+  triggers:
+  - type: kafka
+    metadata:
+      bootstrapServers: kafka.iot.svc.cluster.local:9092
+      consumerGroup: sensor-processors
+      topic: sensor-raw
+      lagThreshold: "1000"         # 1 replica per 1000 messages of lag
+      offsetResetPolicy: latest
+
+---
+# ResourceQuota for IoT namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: iot-quota
+  namespace: iot
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    pods: "50"
+    persistentvolumeclaims: "10"`},
+    {label:'Flink Operator — FlinkDeployment',code:`apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: sensor-analytics
+  namespace: iot
+spec:
+  image: flink:1.18
+  flinkVersion: v1_18
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "4"
+    state.checkpoints.dir: gs://my-bucket/flink-checkpoints
+    execution.checkpointing.interval: "30000"    # checkpoint every 30s
+    high-availability: kubernetes                 # HA via K8s leader election
+    high-availability.storageDir: gs://my-bucket/flink-ha
+  serviceAccount: flink
+  jobManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  taskManager:
+    replicas: 4
+    resource:
+      memory: "4096m"
+      cpu: 2
+  job:
+    jarURI: gs://my-bucket/sensor-analytics.jar
+    parallelism: 16
+    upgradeMode: savepoint             # take savepoint before upgrade`},
+    {label:'Strimzi Kafka — StatefulSet via CRD',code:`apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: iot-kafka
+  namespace: iot
+spec:
+  kafka:
+    version: 3.6.0
+    replicas: 3
+    listeners:
+    - name: plain
+      port: 9092
+      type: internal
+      tls: false
+    - name: tls
+      port: 9093
+      type: internal
+      tls: true
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      log.retention.hours: 168          # keep 7 days of sensor data
+    storage:
+      type: persistent-claim
+      size: 100Gi
+      class: ssd
+  zookeeper:
+    replicas: 3
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      class: ssd`},
+  ],
+  commands:[
+    {label:'Install KEDA + Strimzi + monitor lag',cmd:`# Install Strimzi Kafka Operator
+helm install strimzi-operator strimzi/strimzi-kafka-operator \\
+  --namespace iot --create-namespace
+
+# Install KEDA
+helm install keda kedacore/keda \\
+  --namespace keda --create-namespace
+
+# Apply Kafka cluster CRD
+kubectl apply -f kafka-cluster.yaml -n iot
+
+# Wait for Kafka to be ready
+kubectl wait kafka/iot-kafka --for=condition=Ready \\
+  --timeout=300s -n iot
+
+# Check consumer lag
+kubectl exec -n iot kafka-0 -- \\
+  bin/kafka-consumer-groups.sh \\
+  --bootstrap-server localhost:9092 \\
+  --describe --group sensor-processors
+
+# Watch KEDA scale consumers
+kubectl get scaledobject sensor-consumer-scaler -n iot -w`},
+    {label:'Simulate sensor storm + watch scale',cmd:`# Run load generator: 100k msgs/sec for 2 minutes
+kubectl run sensor-load \\
+  --image=gcr.io/proj/sensor-gen:latest \\
+  --restart=Never \\
+  -n iot \\
+  -- --rate=100000 --duration=120s
+
+# Watch KEDA scale consumers in real-time
+watch -n 2 kubectl get pods -n iot -l app=sensor-consumer
+
+# Check ResourceQuota usage
+kubectl describe resourcequota iot-quota -n iot`},
+  ]
+},
+
+// ─── CI/CD PLATFORM ──────────────────────────────────────────
+{
+  id:'cicd',icon:'🔄',title:'CI/CD PLATFORM',sub:'tekton · self-hosted · gitops',
+  color:'#f7931a',cborder:'rgba(247,147,26,.45)',cbg:'rgba(247,147,26,.08)',
+  diff:2,dlbl:'Intermediate',
+  desc:'Build a self-hosted CI/CD platform on GKE using Tekton Pipelines. Run builds, tests, and deployments as native Kubernetes workloads with full audit trails.',
+  tags:[{l:'Tekton',c:'#f7931a'},{l:'Pipeline CRD',c:'#4db8ff'},{l:'ServiceAccount',c:'#a8ff3e'},{l:'Webhook',c:'#b06dff'}],
+
+  summary:{
+    tagline:'A fully self-hosted CI/CD platform running entirely on Kubernetes, where every build, test, and deployment is a native K8s workload with logs, retries, and audit history.',
+    why:'Understanding CI/CD on K8s teaches you how real teams ship software. Tekton exposes every pipeline concept as a CRD — Tasks, Pipelines, PipelineRuns — making CI/CD itself a declarative, versionable system.',
+    metrics:[{v:'<3min',l:'build time'},{v:'K8s-native',l:'execution'},{v:'GitOps',l:'trigger model'},{v:'RBAC',l:'team isolation'}],
+    learns:[
+      'Model CI/CD pipelines as Kubernetes Custom Resources (CRDs)',
+      'Run each pipeline step in its own isolated Pod with resource limits',
+      'Trigger builds automatically via Tekton Triggers and GitHub webhooks',
+      'Use Workspaces (PVCs) to share artifacts between pipeline steps',
+      'Implement multi-team pipeline isolation using RBAC and Namespaces',
+      'Store and retrieve build artifacts from GCS using Workload Identity',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — CI/CD PLATFORM                                │
+  │                                                              │
+  │  [GitHub Push] ──→ [Tekton EventListener]                    │
+  │                           │  (validates HMAC webhook)        │
+  │                    [TriggerBinding]                          │
+  │                    [TriggerTemplate]                         │
+  │                           │                                  │
+  │                    [PipelineRun created]                     │
+  │                           │                                  │
+  │         ┌─────────────────┼──────────────────┐               │
+  │         ↓                 ↓                  ↓               │
+  │   [Task: clone]   [Task: build+push]  [Task: deploy]         │
+  │   git-clone       kaniko (no docker)  kubectl apply          │
+  │   PVC workspace   GCR push            GKE target cluster     │
+  │                                                              │
+  │  Each Task = isolated Pod with its own ServiceAccount        │
+  │  Workspace = shared PVC mounted across Tasks                 │
+  │  TektonDashboard: web UI for pipeline runs & logs            │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'📋',name:'Task',kind:'Tekton CRD',kindColor:'#f7931a',
+     sig:'The atomic unit of Tekton. A Task defines a series of steps, each running in its own container within a single Pod. Steps share a workspace (PVC) and environment.',
+     why:'WHY: Each Task is re-usable across pipelines. A "run-tests" Task can be used by every team\'s pipeline without duplication. The Task catalog is the team\'s shared library.'},
+    {icon:'🔗',name:'Pipeline',kind:'Tekton CRD',kindColor:'#4db8ff',
+     sig:'Orchestrates multiple Tasks into a DAG with dependencies (runAfter), parallel execution, and conditional branches (when expressions). Declares Workspaces shared between Tasks.',
+     why:'WHY: Pipelines encode your entire delivery process as a versionable K8s resource. Rolling back a bad pipeline = git revert. Auditing a deploy = kubectl get pipelinerun.'},
+    {icon:'📦',name:'Workspace',kind:'Tekton CRD',kindColor:'#a8ff3e',
+     sig:'A shared storage volume (usually a PVC) mounted into Tasks. Used to pass the checked-out source code from clone → build → test → push without re-cloning.',
+     why:'WHY: Without Workspaces, each Task would need to re-clone the repository. Workspaces let artifacts flow through the pipeline naturally, like a shared filesystem.'},
+    {icon:'🎣',name:'EventListener',kind:'Tekton Triggers',kindColor:'#b06dff',
+     sig:'A Deployment + Service that listens for incoming webhooks (from GitHub, GitLab, etc.). Validates the payload, extracts parameters, and creates PipelineRuns automatically.',
+     why:'WHY: The bridge between Git events and K8s pipeline execution. A push to main automatically creates a PipelineRun — no human intervention needed.'},
+    {icon:'🐳',name:'Kaniko',kind:'Tool',kindColor:'#f7931a',
+     sig:'A container image builder that runs inside a container without requiring Docker daemon or privileged mode. Builds Dockerfiles and pushes to GCR using Workload Identity.',
+     why:'WHY: Running Docker-in-Docker (DinD) in K8s requires privileged containers — a security nightmare. Kaniko builds images securely from within a normal, unprivileged Pod.'},
+    {icon:'🔐',name:'Pipeline RBAC',kind:'Security',kindColor:'#ff4d6d',
+     sig:'Each team gets a dedicated namespace and ServiceAccount for Tekton. RBAC limits what the pipeline SA can do: team-a pipeline can only deploy to team-a namespace.',
+     why:'WHY: Without RBAC, a CI pipeline could theoretically deploy to any namespace, overwrite another team\'s workload, or read their Secrets. Pipeline RBAC prevents cross-team blast radius.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Tekton Installation',desc:'Get the CI/CD engine running on your cluster.',tasks:[
+      'Install Tekton Pipelines: kubectl apply -f tekton-pipelines.yaml',
+      'Install Tekton Dashboard: kubectl apply -f tekton-dashboard.yaml',
+      'Install Tekton Triggers: kubectl apply -f tekton-triggers.yaml',
+      'Access dashboard: kubectl port-forward svc/tekton-dashboard 9097:9097',
+      'Apply a sample "hello-world" Task and run it manually',
+    ]},
+    {title:'Phase 2 — Build Pipeline',desc:'Clone → Build → Push → Deploy in 4 Tasks.',tasks:[
+      'Write Task: git-clone (uses tekton-catalog/git-clone)',
+      'Write Task: build-push using Kaniko (no Docker daemon)',
+      'Configure Workload Identity for Kaniko to push to GCR',
+      'Write Task: run-tests (go test / pytest / jest)',
+      'Wire Tasks into a Pipeline with runAfter dependencies',
+      'Manually create a PipelineRun and watch pods execute sequentially',
+    ]},
+    {title:'Phase 3 — Webhook Triggers',desc:'Auto-trigger on every Git push.',tasks:[
+      'Create GitHub webhook pointing to EventListener external IP',
+      'Write TriggerBinding: extract branch, commit SHA from webhook payload',
+      'Write TriggerTemplate: creates PipelineRun with extracted params',
+      'Push a commit — watch PipelineRun auto-create and execute',
+      'Add CEL filter: only trigger pipeline on push to main branch',
+    ]},
+    {title:'Phase 4 — Multi-Team Isolation',desc:'Safe CI/CD for multiple engineering teams.',tasks:[
+      'Create namespaces: team-a-ci, team-b-ci',
+      'Create ServiceAccount per team with RBAC: deploy only to own namespace',
+      'Create PipelineRun quota per namespace: max 5 concurrent runs',
+      'Set ResourceQuota: CI pipelines limited to 10 CPU per team',
+      'Implement pipeline result webhooks: post status to Slack',
+    ]},
+  ],
+
+  yamls:[
+    {label:'Task — Build & Push with Kaniko',code:`apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-and-push
+  namespace: cicd
+spec:
+  params:
+  - name: image
+    description: Full image name including tag
+  - name: context
+    default: "."
+  workspaces:
+  - name: source             # mounted from Pipeline's shared PVC
+  steps:
+  - name: build-push
+    image: gcr.io/kaniko-project/executor:latest
+    args:
+    - --dockerfile=$(workspaces.source.path)/Dockerfile
+    - --context=$(workspaces.source.path)/$(params.context)
+    - --destination=$(params.image)
+    - --cache=true           # cache layers in GCR for speed
+    - --cache-ttl=24h
+    env:
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: /var/secrets/google/key.json
+    securityContext:
+      runAsUser: 0           # kaniko requires root (but no docker daemon)
+
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: app-pipeline
+  namespace: cicd
+spec:
+  workspaces:
+  - name: shared-workspace   # single PVC shared across all Tasks
+  params:
+  - name: git-url
+  - name: git-revision
+  - name: image-name
+  tasks:
+  - name: clone
+    taskRef:
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+    params:
+    - name: url
+      value: $(params.git-url)
+    - name: revision
+      value: $(params.git-revision)
+  - name: build
+    runAfter: [clone]        # depends on clone completing first
+    taskRef:
+      name: build-and-push
+    workspaces:
+    - name: source
+      workspace: shared-workspace
+    params:
+    - name: image
+      value: $(params.image-name)`},
+    {label:'EventListener — GitHub Webhook Trigger',code:`apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-listener
+  namespace: cicd
+spec:
+  serviceAccountName: tekton-triggers-sa
+  triggers:
+  - name: github-push-main
+    interceptors:
+    - ref:
+        name: github
+      params:
+      - name: secretRef         # validate GitHub webhook HMAC signature
+        value:
+          secretName: github-webhook-secret
+          secretKey: secret
+      - name: eventTypes
+        value: [push]
+    - ref:
+        name: cel               # only trigger on pushes to main branch
+      params:
+      - name: filter
+        value: "body.ref == 'refs/heads/main'"
+    bindings:
+    - ref: github-push-binding
+    template:
+      ref: app-pipeline-template
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-push-binding
+  namespace: cicd
+spec:
+  params:
+  - name: git-url
+    value: $(body.repository.clone_url)
+  - name: git-revision
+    value: $(body.head_commit.id)
+  - name: image-name
+    value: gcr.io/my-project/$(body.repository.name):$(body.head_commit.id)`},
+  ],
+  commands:[
+    {label:'Install Tekton + run first pipeline',cmd:`# Install Tekton Pipelines
+kubectl apply --filename \\
+  https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+
+# Install Tekton Dashboard (UI)
+kubectl apply --filename \\
+  https://storage.googleapis.com/tekton-releases/dashboard/latest/release.yaml
+
+# Install Tekton Triggers
+kubectl apply --filename \\
+  https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+
+# Watch Tekton pods come up
+kubectl get pods -n tekton-pipelines -w
+
+# Access the dashboard
+kubectl port-forward -n tekton-pipelines svc/tekton-dashboard 9097:9097
+
+# Manually start a PipelineRun
+kubectl create -f pipelinerun.yaml -n cicd
+
+# Stream logs from the run
+tkn pipelinerun logs -f -n cicd`},
+    {label:'Watch pipeline execution',cmd:`# List all PipelineRuns
+tkn pipelinerun list -n cicd
+
+# Get detailed status of a run
+tkn pipelinerun describe app-pipeline-run-abc -n cicd
+
+# Stream logs from a specific Task in the run
+tkn taskrun logs -f clone-run-xyz -n cicd
+
+# Watch PipelineRun pods in real-time
+kubectl get pods -n cicd -w --selector=tekton.dev/pipeline=app-pipeline`},
+  ]
+},
+
+// ─── SEARCH PLATFORM ─────────────────────────────────────────
+{
+  id:'search',icon:'🔍',title:'SEARCH PLATFORM',sub:'elasticsearch · full-text · 50M docs',
+  color:'#00bcd4',cborder:'rgba(0,188,212,.45)',cbg:'rgba(0,188,212,.08)',
+  diff:2,dlbl:'Intermediate',
+  desc:'Deploy an Elasticsearch cluster on K8s with ECK Operator, index 50M documents, and build an autocomplete API. Master StatefulSet upgrades, rolling restarts, and shard allocation.',
+  tags:[{l:'ECK Operator',c:'#00bcd4'},{l:'StatefulSet Upgrade',c:'#a8ff3e'},{l:'Shard Allocation',c:'#ffb830'},{l:'PodAffinity',c:'#b06dff'}],
+
+  summary:{
+    tagline:'A production Elasticsearch cluster on GKE managed by the Elastic Cloud on Kubernetes (ECK) Operator, serving full-text search and autocomplete for 50 million documents.',
+    why:'Elasticsearch on Kubernetes is a classic hard problem. The ECK Operator tames StatefulSet rolling upgrades, shard rebalancing, and TLS certificate management. This study teaches operator-managed stateful systems at their most complex.',
+    metrics:[{v:'50M',l:'documents'},{v:'3-node',l:'ES cluster'},{v:'<50ms',l:'search p99'},{v:'ECK',l:'operator managed'}],
+    learns:[
+      'Operate Elasticsearch clusters using the ECK Kubernetes Operator',
+      'Perform zero-downtime rolling upgrades of a StatefulSet via Operator',
+      'Control pod placement with PodAffinity and PodAntiAffinity rules',
+      'Manage shard allocation awareness to survive node failures',
+      'Use Init Containers to tune OS-level settings (vm.max_map_count)',
+      'Snapshot Elasticsearch indices to GCS for backup and restore',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — SEARCH PLATFORM                               │
+  │                                                              │
+  │  [Search API] ──→ [es-client Deployment]                     │
+  │                           │                                  │
+  │                   [Elasticsearch CRD]                        │
+  │                   managed by ECK Operator                    │
+  │                           │                                  │
+  │         ┌─────────────────┼──────────────────┐               │
+  │         ↓                 ↓                  ↓               │
+  │    [es-master-0]    [es-data-0]         [es-data-1]          │
+  │    master node      data + shard        data + shard         │
+  │    (zone: us-a)     (zone: us-a)        (zone: us-b)         │
+  │         │                                                    │
+  │    PodAntiAffinity: spread masters across zones              │
+  │    PodAffinity: keep data pods near their master             │
+  │                                                              │
+  │  ECK Operator watches Elasticsearch CRD                      │
+  │  Handles: TLS certs, rolling upgrades, user management       │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🤖',name:'ECK Operator',kind:'Operator',kindColor:'#00bcd4',
+     sig:'Elastic Cloud on Kubernetes. A Kubernetes Operator that manages Elasticsearch, Kibana, APM Server, and Beats as CRDs. Handles TLS, rolling upgrades, user management, and shard allocation.',
+     why:'WHY: Managing an Elasticsearch StatefulSet manually (rolling upgrades, cert rotation, shard rebalancing) is extremely error-prone. The ECK Operator encodes years of Elastic operational expertise.'},
+    {icon:'🧲',name:'PodAntiAffinity',kind:'Scheduling',kindColor:'#b06dff',
+     sig:'Repels Pods from being scheduled on the same node or zone as Pods matching a label selector. Ensures Elasticsearch master nodes land on different availability zones.',
+     why:'WHY: If all 3 ES masters are on the same node and it fails, the cluster loses quorum and becomes read-only. AntiAffinity spreads them across zones for true HA.'},
+    {icon:'⚙️',name:'Init Container (sysctl)',kind:'Lifecycle',kindColor:'#ffb830',
+     sig:'Elasticsearch requires vm.max_map_count=262144 on the host. An InitContainer running as privileged sets this sysctl before ES starts. Without it, ES refuses to start.',
+     why:'WHY: Some software requires OS-level tuning. InitContainers are the correct K8s pattern for this — they run as root to configure the host, then the app container runs unprivileged.'},
+    {icon:'📸',name:'Snapshot Lifecycle',kind:'Backup',kindColor:'#a8ff3e',
+     sig:'Elasticsearch Snapshot Lifecycle Management (SLM) policy — managed as an Elasticsearch API config. Registers a GCS repository, then snapshots daily. ECK mounts the GCS credentials.',
+     why:'WHY: A StatefulSet PVC is not a backup. If someone accidentally deletes an index, the PVC is gone. Snapshots to GCS let you restore any index to any point in time.'},
+    {icon:'🗂️',name:'Index Templates',kind:'ES Concept',kindColor:'#00bcd4',
+     sig:'Elasticsearch templates that auto-apply settings (shard count, replicas, mappings) when an index matching a pattern is created. Set once, applied to all future indices.',
+     why:'WHY: Without templates, every new index gets default settings (1 shard, 1 replica). Templates ensure consistent mapping and allocation settings without manual intervention.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — ECK Operator + Cluster',desc:'Deploy a managed Elasticsearch cluster.',tasks:[
+      'Install ECK Operator: kubectl apply -f https://download.elastic.co/downloads/eck/latest/crds.yaml',
+      'Apply Elasticsearch CRD: 3 master, 3 data nodes',
+      'Watch cluster come up: kubectl get elasticsearch -w',
+      'Get elastic password: kubectl get secret elasticsearch-es-elastic-user -o go-template=',
+      'Port-forward Kibana: kubectl port-forward svc/kibana-kb-http 5601',
+    ]},
+    {title:'Phase 2 — Index & Search',desc:'Load 50M documents and build the search API.',tasks:[
+      'Write a bulk-indexer Job: reads from GCS CSV, indexes to ES',
+      'Set index template: 3 primary shards, 1 replica',
+      'Deploy search-api: wraps ES _search API with auth',
+      'Implement autocomplete using ES completion suggester',
+      'Run: 500 concurrent search requests, measure p99 latency',
+    ]},
+    {title:'Phase 3 — PodAntiAffinity & Zone Spread',desc:'Survive a zone outage.',tasks:[
+      'Add PodAntiAffinity to master StatefulSet: topology key = zone',
+      'Verify masters are on different zones: kubectl get pods -o wide',
+      'Configure shard allocation awareness: cluster.routing.allocation.awareness.attributes=zone',
+      'Simulate zone failure: kubectl cordon all nodes in zone-a',
+      'Verify cluster stays green (replicas on zone-b take over)',
+    ]},
+    {title:'Phase 4 — Rolling Upgrades',desc:'Upgrade Elasticsearch version with zero downtime.',tasks:[
+      'Change spec.version in Elasticsearch CRD: 8.11.0 → 8.12.0',
+      'ECK drains shards, upgrades one node at a time',
+      'Watch: kubectl get pods -w — one pod restarts at a time',
+      'Monitor cluster health stays green: curl /_cluster/health',
+      'Rollback: revert version in CRD if issues detected',
+    ]},
+  ],
+
+  yamls:[
+    {label:'Elasticsearch CRD (ECK)',code:`apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: search-cluster
+  namespace: search
+spec:
+  version: 8.12.0
+  nodeSets:
+  - name: masters
+    count: 3
+    config:
+      node.roles: [master]
+      cluster.routing.allocation.awareness.attributes: zone
+    podTemplate:
+      spec:
+        initContainers:
+        - name: sysctl                  # required by Elasticsearch
+          securityContext:
+            privileged: true
+          command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  elasticsearch.k8s.elastic.co/node-master: "true"
+              topologyKey: topology.kubernetes.io/zone  # spread across zones
+        containers:
+        - name: elasticsearch
+          resources:
+            limits:
+              memory: 4Gi
+              cpu: 2
+  - name: data
+    count: 3
+    config:
+      node.roles: [data, ingest]
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        storageClassName: ssd
+        resources:
+          requests:
+            storage: 500Gi        # 500Gi SSD per data node
+        accessModes: [ReadWriteOnce]`},
+    {label:'Snapshot Lifecycle Policy',code:`# Register GCS snapshot repository via Kibana/ES API
+# (run after cluster is up)
+PUT /_snapshot/gcs-backup
+{
+  "type": "gcs",
+  "settings": {
+    "bucket": "my-es-snapshots",
+    "base_path": "search-cluster"
+  }
+}
+
+# Create Snapshot Lifecycle Policy (SLM)
+PUT /_slm/policy/daily-snapshots
+{
+  "schedule": "0 30 2 * * ?",         # daily at 02:30
+  "name": "<daily-snap-{now/d}>",
+  "repository": "gcs-backup",
+  "config": {
+    "indices": ["*"],                  # all indices
+    "include_global_state": true
+  },
+  "retention": {
+    "expire_after": "30d",             # keep 30 days of snapshots
+    "min_count": 5,
+    "max_count": 50
+  }
+}`},
+  ],
+  commands:[
+    {label:'Install ECK + deploy cluster',cmd:`# Install ECK CRDs
+kubectl create -f https://download.elastic.co/downloads/eck/2.11.1/crds.yaml
+
+# Install ECK Operator
+kubectl apply -n elastic-system -f \\
+  https://download.elastic.co/downloads/eck/2.11.1/operator.yaml
+
+# Watch operator start
+kubectl -n elastic-system logs -f statefulset.apps/elastic-operator
+
+# Deploy your Elasticsearch cluster
+kubectl apply -f elasticsearch.yaml -n search
+
+# Wait for cluster to be healthy
+kubectl get elasticsearch -n search -w
+
+# Get auto-generated elastic password
+kubectl get secret search-cluster-es-elastic-user \\
+  -n search -o go-template='{{.data.elastic | base64decode}}'`},
+    {label:'Index documents + query',cmd:`# Bulk index from a JSON file
+curl -s -u elastic:$PASS \\
+  -H "Content-Type: application/x-ndjson" \\
+  -XPOST "https://localhost:9200/products/_bulk" \\
+  --data-binary @products-bulk.json
+
+# Test search
+curl -u elastic:$PASS \\
+  "https://localhost:9200/products/_search?q=kubernetes&pretty"
+
+# Check cluster health
+curl -u elastic:$PASS \\
+  "https://localhost:9200/_cluster/health?pretty"
+
+# Check shard allocation
+curl -u elastic:$PASS \\
+  "https://localhost:9200/_cat/shards?v"`},
+  ]
+},
+
+// ─── MULTI-TENANT SAAS ────────────────────────────────────────
+{
+  id:'saas',icon:'🏢',title:'MULTI-TENANT SAAS',sub:'namespace-per-tenant · billing',
+  color:'#e040fb',cborder:'rgba(224,64,251,.45)',cbg:'rgba(224,64,251,.08)',
+  diff:3,dlbl:'Advanced',
+  desc:'A namespace-per-tenant SaaS architecture with automated tenant provisioning, per-tenant resource quotas, billing metering, and cluster autoscaler integration.',
+  tags:[{l:'Namespace Isolation',c:'#e040fb'},{l:'Cluster Autoscaler',c:'#a8ff3e'},{l:'Billing Meter',c:'#ffb830'},{l:'Tenant Operator',c:'#4db8ff'}],
+
+  summary:{
+    tagline:'A SaaS platform where each customer gets their own isolated Kubernetes namespace with dedicated resource quotas, network policies, and usage-based billing metering.',
+    why:'Multi-tenancy is the business model of SaaS. This study teaches you how platform teams build self-service infrastructure: onboard a new customer in seconds, measure their resource consumption, bill accurately, and prevent noisy-neighbor issues — all through K8s primitives.',
+    metrics:[{v:'1000+',l:'tenants'},{v:'<30s',l:'tenant onboard'},{v:'per-ns',l:'billing meter'},{v:'zero',l:'cross-tenant leak'}],
+    learns:[
+      'Build a Tenant Operator that provisions namespaces, RBAC, and quotas automatically',
+      'Implement namespace-level resource metering with Prometheus',
+      'Integrate Cluster Autoscaler to add nodes when tenants need more capacity',
+      'Use LimitRanges to protect tenants from misconfigured apps',
+      'Implement NetworkPolicy templates applied to every new tenant namespace',
+      'Generate per-tenant usage reports from Prometheus for billing',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — MULTI-TENANT SAAS                            │
+  │                                                              │
+  │  [Admin API] ──→ [Tenant Operator]                           │
+  │  POST /tenants     (watches Tenant CRD)                      │
+  │  {name: acme}              │                                 │
+  │                            ↓ reconcile                       │
+  │              ┌─────────────────────────────┐                 │
+  │              │  Creates for each tenant:   │                 │
+  │              │  - Namespace: tenant-acme   │                 │
+  │              │  - ResourceQuota (plan)     │                 │
+  │              │  - LimitRange               │                 │
+  │              │  - NetworkPolicy (deny-all) │                 │
+  │              │  - RoleBinding (tenant SA)  │                 │
+  │              │  - ServiceAccount           │                 │
+  │              └─────────────────────────────┘                 │
+  │                                                              │
+  │  [Prometheus] scrapes per-namespace resource usage           │
+  │  [Billing Worker] reads metrics → generates invoices         │
+  │  [Cluster Autoscaler] adds nodes when quotas are near full   │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🏗️',name:'Tenant Operator',kind:'Operator',kindColor:'#e040fb',
+     sig:'Custom Operator that watches a Tenant CRD. When a new Tenant is created, it provisions the full namespace stack: namespace, quota, limitrange, networkpolicy, RBAC, and secrets. Deletion triggers cleanup.',
+     why:'WHY: Onboarding a new tenant manually takes 30 minutes and is error-prone. The Operator does it in 5 seconds, identically every time, with zero human intervention.'},
+    {icon:'📊',name:'Cluster Autoscaler',kind:'Infrastructure',kindColor:'#a8ff3e',
+     sig:'GKE\'s node autoscaler. Watches for Pending pods (unschedulable due to insufficient resources) and adds nodes to the cluster. Removes underutilized nodes to save cost.',
+     why:'WHY: You cannot pre-provision nodes for 1000 tenants. Cluster Autoscaler means you pay only for what tenants actually use — capacity grows and shrinks with demand.'},
+    {icon:'💰',name:'Usage Metering',kind:'Billing',kindColor:'#ffb830',
+     sig:'Prometheus records kube_pod_container_resource_requests per namespace. A billing worker queries these time-series to calculate CPU-hours and memory-GiB-hours per tenant per billing period.',
+     why:'WHY: SaaS pricing is usage-based. You need accurate per-tenant consumption data to generate invoices. Prometheus + namespace labels provide this without any application-level changes.'},
+    {icon:'🔇',name:'Noisy Neighbor Prevention',kind:'Policy',kindColor:'#4db8ff',
+     sig:'A combination of ResourceQuota (total namespace cap) + LimitRange (per-pod cap) + PriorityClass (tenant tier) ensures one tenant\'s workload cannot degrade another\'s performance.',
+     why:'WHY: Without quotas, one tenant running a huge batch job can starve CPU from other tenants. The noisy neighbor problem kills SaaS reputation. Quotas + limits prevent it.'},
+    {icon:'🚪',name:'Tenant Admission Webhook',kind:'Extensibility',kindColor:'#e040fb',
+     sig:'A validating admission webhook that intercepts all API requests in tenant namespaces. Enforces tenant-specific rules: no hostNetwork, required labels, approved image registries only.',
+     why:'WHY: Tenants shouldn\'t be able to deploy privileged containers or pull from untrusted registries. The webhook is the enforcement point for tenant-specific security policies.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Tenant CRD + Operator',desc:'Automate tenant lifecycle management.',tasks:[
+      'Define Tenant CRD: spec.name, spec.plan (starter/pro/enterprise)',
+      'Implement Operator: Tenant created → provision namespace stack',
+      'Implement finalizer: Tenant deleted → archive data, delete namespace',
+      'Deploy Operator and create a test Tenant: kubectl apply -f tenant-acme.yaml',
+      'Verify all resources created in tenant-acme namespace',
+    ]},
+    {title:'Phase 2 — Resource Isolation',desc:'Prevent noisy-neighbor problems.',tasks:[
+      'Create ResourceQuota templates per plan (starter: 2CPU/4Gi, pro: 10CPU/20Gi)',
+      'Create LimitRange template: max 1 CPU / 2Gi per container',
+      'Apply default-deny NetworkPolicy to every new tenant namespace',
+      'Allow only ingress from the shared API gateway to tenant pods',
+      'Test: tenant-a pods cannot reach tenant-b pods',
+    ]},
+    {title:'Phase 3 — Cluster Autoscaler',desc:'Scale nodes automatically with tenant demand.',tasks:[
+      'Enable Cluster Autoscaler on GKE node pool',
+      'Set min-nodes=2, max-nodes=50',
+      'Onboard 20 tenants simultaneously, watch CA add nodes',
+      'Watch CA remove nodes when tenants are idle (scale-down cooldown)',
+      'Set disruption budget on critical tenant pods to prevent CA from evicting them',
+    ]},
+    {title:'Phase 4 — Billing Metering',desc:'Generate accurate per-tenant invoices.',tasks:[
+      'Install kube-state-metrics for namespace resource metrics',
+      'Write Prometheus recording rules: per-namespace CPU/memory usage',
+      'Write billing-worker CronJob: query Prometheus, write to BigQuery',
+      'Build invoice template: tenant name, period, CPU-hours, memory-GiB-hours',
+      'Test: create tenant, run workload 1 hour, verify metered correctly',
+    ]},
+  ],
+
+  yamls:[
+    {label:'Tenant CRD + Operator Reconcile Output',code:`# Tenant Custom Resource (input to Operator)
+apiVersion: saas.platform.io/v1
+kind: Tenant
+metadata:
+  name: acme-corp
+spec:
+  plan: pro                        # starter | pro | enterprise
+  displayName: "Acme Corporation"
+  contactEmail: ops@acme.com
+  regions: [us-central1]
+
+---
+# What the Operator creates automatically:
+
+# 1. Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-acme-corp
+  labels:
+    tenant: acme-corp
+    plan: pro
+    billing: enabled
+
+---
+# 2. ResourceQuota (based on plan=pro)
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: tenant-acme-corp
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "30"
+
+---
+# 3. NetworkPolicy (default deny — tenants are isolated)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: tenant-acme-corp
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]`},
+    {label:'Cluster Autoscaler + Billing Prometheus',code:`# Cluster Autoscaler is configured via GKE at cluster creation
+# Enable on existing cluster:
+# gcloud container clusters update CLUSTER \\
+#   --enable-autoscaling \\
+#   --min-nodes=2 --max-nodes=50 \\
+#   --node-pool=default-pool
+
+# Prometheus recording rule for per-namespace billing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tenant-billing-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: tenant-usage
+    interval: 60s
+    rules:
+    # CPU usage per tenant namespace (averaged over 5 min)
+    - record: tenant:cpu_usage_cores:avg5m
+      expr: |
+        avg by (namespace) (
+          rate(container_cpu_usage_seconds_total{
+            container!="", namespace=~"tenant-.*"
+          }[5m])
+        )
+    # Memory usage per tenant namespace
+    - record: tenant:memory_usage_bytes:avg5m
+      expr: |
+        avg by (namespace) (
+          container_memory_working_set_bytes{
+            container!="", namespace=~"tenant-.*"
+          }
+        )`},
+  ],
+  commands:[
+    {label:'Onboard tenant + verify isolation',cmd:`# Create a new tenant via CRD
+kubectl apply -f - <<'EOF'
+apiVersion: saas.platform.io/v1
+kind: Tenant
+metadata:
+  name: acme-corp
+spec:
+  plan: pro
+  displayName: "Acme Corporation"
+  contactEmail: ops@acme.com
+EOF
+
+# Operator auto-provisions namespace stack
+# Verify resources were created
+kubectl get namespace tenant-acme-corp
+kubectl get resourcequota -n tenant-acme-corp
+kubectl get networkpolicy -n tenant-acme-corp
+kubectl get rolebinding -n tenant-acme-corp
+
+# Test isolation: acme pod cannot reach beta pod
+kubectl exec -n tenant-acme-corp deploy/app -- \\
+  curl -s --connect-timeout 2 http://app.tenant-beta-corp.svc.cluster.local
+# Expected: connection refused / timeout`},
+    {label:'Query Prometheus for billing data',cmd:`# Port-forward Prometheus
+kubectl port-forward svc/prometheus-operated 9090:9090 -n monitoring
+
+# Query CPU-hours per tenant for last 30 days
+curl -s 'http://localhost:9090/api/v1/query' \\
+  --data-urlencode 'query=sum_over_time(tenant:cpu_usage_cores:avg5m[30d])' \\
+  | jq '.data.result[] | {tenant: .metric.namespace, cpu_hours: .value[1]}'
+
+# Memory usage per tenant
+curl -s 'http://localhost:9090/api/v1/query' \\
+  --data-urlencode 'query=sum_over_time(tenant:memory_usage_bytes:avg5m[30d]) / 1073741824' \\
+  | jq '.data.result[] | {tenant: .metric.namespace, gib_hours: .value[1]}'`},
+  ]
+},
+
+// ─── ZERO-DOWNTIME DATABASE ───────────────────────────────────
+{
+  id:'db',icon:'🗃️',title:'DATABASE OPERATIONS',sub:'postgres HA · backup · migration',
+  color:'#64ffda',cborder:'rgba(100,255,218,.45)',cbg:'rgba(100,255,218,.08)',
+  diff:2,dlbl:'Intermediate',
+  desc:'Run production PostgreSQL on GKE with automatic failover using the CloudNativePG Operator. Master StatefulSet upgrades, PITR backups, logical replication, and zero-downtime schema migrations.',
+  tags:[{l:'CloudNativePG',c:'#64ffda'},{l:'PITR Backup',c:'#ffb830'},{l:'Failover',c:'#ff4d6d'},{l:'Schema Migration',c:'#a8ff3e'}],
+
+  summary:{
+    tagline:'A production-grade PostgreSQL HA cluster on GKE with automatic primary election, point-in-time recovery, logical replication, and safe zero-downtime schema migrations.',
+    why:'Databases are the hardest stateful workloads to run on Kubernetes. The CloudNativePG Operator solves primary election, WAL archiving, switchover, and failover — all declared in a single CRD. This study teaches you how to run databases safely in a container-native world.',
+    metrics:[{v:'<30s',l:'failover time'},{v:'PITR',l:'any point in time'},{v:'1 CRD',l:'full HA cluster'},{v:'zero',l:'data loss on failover'}],
+    learns:[
+      'Deploy a PostgreSQL primary-replica cluster using CloudNativePG Operator',
+      'Configure WAL archiving to GCS for Point-In-Time Recovery (PITR)',
+      'Perform a controlled primary switchover with zero data loss',
+      'Run zero-downtime schema migrations with expand-contract pattern',
+      'Use PodDisruptionBudgets to protect the database during node drain',
+      'Monitor replication lag and alert on divergence using Prometheus',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — CLOUDNATIVEPG CLUSTER                         │
+  │                                                              │
+  │  [App] ──→ [RW Service] ──→ [postgres-1 PRIMARY]             │
+  │  [App] ──→ [RO Service] ──→ [postgres-2 REPLICA]             │
+  │                             [postgres-3 REPLICA]             │
+  │                                     │                        │
+  │                             WAL streaming replication        │
+  │                                     │                        │
+  │                              [GCS WAL archive]               │
+  │                              WAL-G continuous backup          │
+  │                                                              │
+  │  CloudNativePG Operator:                                     │
+  │  - Watches Cluster CRD                                       │
+  │  - Manages primary election (Patroni-like)                   │
+  │  - Updates RW Service endpoint on failover in <30s           │
+  │  - Schedules physical backups to GCS                         │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🏛️',name:'CloudNativePG Operator',kind:'Operator',kindColor:'#64ffda',
+     sig:'A Kubernetes Operator that manages PostgreSQL clusters: primary election via Raft-based consensus, automatic failover, WAL archiving, physical backups, and in-place minor version upgrades.',
+     why:'WHY: Managing Postgres HA manually (Patroni + etcd + HAProxy) requires 5+ components. CNPG collapses this into one Operator and one CRD, with all operational knowledge built in.'},
+    {icon:'📼',name:'WAL Archiving + PITR',kind:'Backup',kindColor:'#ffb830',
+     sig:'PostgreSQL Write-Ahead Log is continuously streamed to GCS. Point-In-Time Recovery lets you restore the database to any second in history, not just snapshot intervals.',
+     why:'WHY: A daily backup means you lose up to 24 hours of data. WAL archiving gives you continuous backup — restore to 3 minutes before the bad query ran.'},
+    {icon:'🔀',name:'Switchover vs Failover',kind:'HA Concept',kindColor:'#ff4d6d',
+     sig:'Switchover is a planned primary change (zero data loss, graceful). Failover is automatic after primary failure (possible brief unavailability). CNPG handles both via the Cluster CRD.',
+     why:'WHY: Understanding the difference matters for ops. Switchover before a GKE node drain = zero impact. Failover after a crash = CNPG detects and promotes a replica in <30s.'},
+    {icon:'📐',name:'Expand-Contract Migration',kind:'Pattern',kindColor:'#a8ff3e',
+     sig:'A safe schema migration pattern: Phase 1 (expand) — add new column as nullable. Phase 2 — backfill data, update app to write to both. Phase 3 (contract) — drop old column. Never blocks.',
+     why:'WHY: ALTER TABLE ADD COLUMN NOT NULL on a 500M row table takes hours and locks the table. Expand-contract breaks it into steps that each run in milliseconds with no downtime.'},
+    {icon:'🔁',name:'Logical Replication',kind:'Postgres',kindColor:'#64ffda',
+     sig:'Postgres feature that replicates specific tables or publications to another cluster (across K8s namespaces or even cloud providers). Used for data warehouse feeds and read replicas.',
+     why:'WHY: Physical replication replicates everything. Logical replication lets you send only the orders table to your analytics cluster, keeping sensitive data isolated.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — CNPG Cluster Setup',desc:'Deploy a 3-node PostgreSQL HA cluster.',tasks:[
+      'Install CloudNativePG Operator: kubectl apply -f cnpg.yaml',
+      'Apply Cluster CRD: 1 primary + 2 replicas, GCS WAL archive',
+      'Connect to primary: kubectl exec -it postgres-1 -- psql',
+      'Verify replication: SELECT * FROM pg_stat_replication;',
+      'Get connection strings from CNPG-managed Services',
+    ]},
+    {title:'Phase 2 — Failover Testing',desc:'Prove HA works before you need it.',tasks:[
+      'Delete primary pod: kubectl delete pod postgres-1',
+      'Watch CNPG promote postgres-2 to primary: kubectl get pods -w',
+      'Measure RW Service downtime (should be <30s)',
+      'Verify no data loss: insert row before kill, verify after promotion',
+      'Practice controlled switchover: kubectl cnpg promote postgres-2',
+    ]},
+    {title:'Phase 3 — PITR Backup + Restore',desc:'Recover from accidental data deletion.',tasks:[
+      'Enable scheduled physical backups: every 6 hours to GCS',
+      'Insert test data, note the timestamp',
+      'Simulate disaster: DROP TABLE orders;',
+      'Create new Cluster CRD with recovery target: 30 seconds before DROP',
+      'Watch CNPG replay WAL to restore exact point in time',
+    ]},
+    {title:'Phase 4 — Zero-Downtime Migrations',desc:'Change schema without locking the table.',tasks:[
+      'Install atlas or flyway as a K8s Job for migrations',
+      'Implement expand: ALTER TABLE orders ADD COLUMN status_v2 VARCHAR;',
+      'Deploy app v2: writes to both status and status_v2',
+      'Backfill migration Job: UPDATE orders SET status_v2 = status;',
+      'Deploy app v3: reads status_v2 only',
+      'Contract: DROP COLUMN status — table now uses new schema only',
+    ]},
+  ],
+
+  yamls:[
+    {label:'CloudNativePG Cluster CRD',code:`apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-prod
+  namespace: database
+spec:
+  instances: 3                     # 1 primary + 2 replicas
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "256MB"
+      wal_level: logical           # needed for logical replication
+
+  bootstrap:
+    initdb:
+      database: app_db
+      owner: app_user
+
+  superuserSecret:
+    name: postgres-superuser       # K8s Secret with password
+
+  storage:
+    size: 100Gi
+    storageClass: ssd
+
+  backup:
+    retentionPolicy: "30d"         # PITR window: 30 days
+    barmanObjectStore:
+      destinationPath: gs://my-postgres-backups/prod
+      googleCredentials:
+        applicationCredentials:
+          secret:
+            name: gcs-credentials
+            key: serviceaccount.json
+
+  # RW Service: always points to primary
+  # RO Service: round-robins across replicas
+  # These are auto-created by CNPG
+  enableSuperuserAccess: false     # never expose superuser externally
+
+  monitoring:
+    enablePodMonitor: true         # auto-creates Prometheus PodMonitor`},
+    {label:'Schema Migration Job (Flyway)',code:`apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate-v2-3
+  namespace: database
+spec:
+  backoffLimit: 0                  # fail fast on migration errors
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: wait-for-postgres    # don't run until DB is accepting connections
+        image: busybox
+        command: ['sh', '-c',
+          'until nc -z postgres-prod-rw 5432; do echo waiting; sleep 2; done']
+      containers:
+      - name: flyway
+        image: flyway/flyway:10
+        args: [migrate]
+        env:
+        - name: FLYWAY_URL
+          value: jdbc:postgresql://postgres-prod-rw.database.svc.cluster.local:5432/app_db
+        - name: FLYWAY_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-db-credentials
+              key: username
+        - name: FLYWAY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-db-credentials
+              key: password
+        volumeMounts:
+        - name: migrations
+          mountPath: /flyway/sql   # migration SQL files from ConfigMap
+      volumes:
+      - name: migrations
+        configMap:
+          name: db-migrations`},
+  ],
+  commands:[
+    {label:'Install CNPG + deploy cluster',cmd:`# Install CloudNativePG Operator
+kubectl apply --server-side -f \\
+  https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.22/releases/cnpg-1.22.0.yaml
+
+# Deploy your Postgres cluster
+kubectl apply -f postgres-cluster.yaml -n database
+
+# Watch cluster come up
+kubectl get cluster postgres-prod -n database -w
+
+# Connect to primary
+kubectl exec -it postgres-prod-1 -n database -- psql -U app_user app_db
+
+# Check replication status
+kubectl exec -it postgres-prod-1 -n database -- \\
+  psql -c "SELECT client_addr, state, sync_state FROM pg_stat_replication;"`},
+    {label:'PITR restore + failover test',cmd:`# Trigger manual switchover (planned, zero data loss)
+kubectl cnpg promote postgres-prod postgres-prod-2 -n database
+
+# Check who is primary now
+kubectl get pods -n database -l cnpg.io/cluster=postgres-prod
+
+# Force failover test: kill primary
+kubectl delete pod postgres-prod-1 -n database
+
+# Watch CNPG elect new primary (should take <30s)
+kubectl get pods -n database -w
+
+# Create PITR recovery cluster (point to 5 minutes ago)
+kubectl apply -f - <<'EOF'
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-recovery
+  namespace: database
+spec:
+  instances: 1
+  bootstrap:
+    recovery:
+      source: postgres-prod
+      recoveryTarget:
+        targetTime: "2024-01-15 14:30:00"  # restore to this exact time
+  externalClusters:
+  - name: postgres-prod
+    barmanObjectStore:
+      destinationPath: gs://my-postgres-backups/prod
+EOF`},
+  ]
+},
+
+// ─── CHAOS ENGINEERING ───────────────────────────────────────
+{
+  id:'chaos',icon:'💥',title:'CHAOS ENGINEERING',sub:'litmus · fault injection · resilience',
+  color:'#ff6e40',cborder:'rgba(255,110,64,.45)',cbg:'rgba(255,110,64,.08)',
+  diff:3,dlbl:'Advanced',
+  desc:'Build a chaos engineering practice on GKE using LitmusChaos. Run structured experiments: pod kills, network partitions, CPU hogs, and disk fills. Prove your system is resilient.',
+  tags:[{l:'LitmusChaos',c:'#ff6e40'},{l:'ChaosExperiment CRD',c:'#4db8ff'},{l:'Steady State',c:'#a8ff3e'},{l:'GameDay',c:'#b06dff'}],
+
+  summary:{
+    tagline:'A structured chaos engineering platform on GKE that continuously validates system resilience by injecting controlled failures and measuring recovery against defined steady-state metrics.',
+    why:'You don\'t know if your system is resilient until you break it deliberately. Chaos engineering is how Netflix, Google, and Amazon validate their resilience. This study teaches you how to move from "we think it works" to "we proved it survives failure X."',
+    metrics:[{v:'10+',l:'chaos scenarios'},{v:'SLO-based',l:'steady state'},{v:'automated',l:'GameDays'},{v:'0 surprises',l:'in production'}],
+    learns:[
+      'Define steady-state hypotheses with SLO-based success criteria',
+      'Run chaos experiments using LitmusChaos ChaosExperiment and ChaosEngine CRDs',
+      'Inject pod failures, network latency, CPU hogs, and disk fills safely',
+      'Automate chaos schedules with ChaosSchedule for continuous validation',
+      'Measure blast radius and compare against steady-state hypothesis',
+      'Build a Game Day runbook: structured resilience testing ceremonies',
+    ]
+  },
+
+  arch:`
+  ┌──────────────────────────────────────────────────────────────┐
+  │  GKE CLUSTER — CHAOS ENGINEERING PLATFORM                   │
+  │                                                              │
+  │  [Chaos Operator] watches ChaosEngine CRD                    │
+  │                           │                                  │
+  │                    [ChaosEngine]                             │
+  │                    target: booking-api                       │
+  │                    experiments: pod-delete                   │
+  │                           │                                  │
+  │               ┌───────────┴───────────┐                      │
+  │               ↓                       ↓                      │
+  │     [Chaos Runner Pod]      [Monitoring]                     │
+  │     executes experiment     Prometheus checks SLO:           │
+  │     deletes random pod      error_rate < 1%                  │
+  │                             p99_latency < 500ms              │
+  │                                                              │
+  │  [ChaosSchedule]: run pod-delete every day at 2am            │
+  │  [LitmusPortal]:  web UI to design and monitor experiments    │
+  │                                                              │
+  │  Experiment library: pod-delete, network-loss, cpu-hog,      │
+  │  disk-fill, container-kill, node-drain, node-io-stress       │
+  └──────────────────────────────────────────────────────────────┘`,
+
+  blocks:[
+    {icon:'🔬',name:'Steady-State Hypothesis',kind:'Concept',kindColor:'#ff6e40',
+     sig:'The definition of "normal" for your system, expressed as measurable metrics. Example: "error rate < 1% AND p99 latency < 500ms." Chaos experiments only succeed if the system stays within these bounds during fault injection.',
+     why:'WHY: Without a steady-state definition, chaos is just random destruction. The hypothesis makes experiments scientific: you\'re proving a specific claim about resilience.'},
+    {icon:'⚙️',name:'ChaosExperiment CRD',kind:'LitmusChaos',kindColor:'#4db8ff',
+     sig:'A reusable template defining how to inject a specific fault: pod-delete, network-loss, cpu-hog. Parameterized by target labels, duration, and intensity. Stored in the LitmusChaosHub.',
+     why:'WHY: The experiment library is the shared knowledge base. Teams don\'t write chaos scripts — they compose from proven, safe experiment templates.'},
+    {icon:'🎯',name:'ChaosEngine CRD',kind:'LitmusChaos',kindColor:'#a8ff3e',
+     sig:'The execution context. References a ChaosExperiment, specifies the target application (by label), and wires up the probes that measure steady-state during the experiment.',
+     why:'WHY: ChaosEngine is the "run this experiment against that app" declaration. It\'s what you submit to actually trigger the chaos. The Operator watches for it and executes.'},
+    {icon:'📡',name:'Chaos Probes',kind:'LitmusChaos',kindColor:'#b06dff',
+     sig:'Checks that run during a chaos experiment to validate the steady-state hypothesis. Types: HTTPProbe (call /health), PromProbe (query Prometheus), CmdProbe (run a script), K8sProbe (check pod status).',
+     why:'WHY: Probes are what make chaos engineering rigorous. Without them, you\'re just breaking things. Probes verify your system actually recovered within the SLO during the fault.'},
+    {icon:'📅',name:'ChaosSchedule',kind:'LitmusChaos',kindColor:'#ff6e40',
+     sig:'Runs ChaosEngines on a cron schedule. Enables continuous resilience validation: pod-delete runs every night at 2am so regressions are caught before they hit production incidents.',
+     why:'WHY: One-time chaos experiments give one-time confidence. Scheduled chaos gives continuous confidence. Every deployment must survive the scheduled chaos — regression caught in CI/CD.'},
+    {icon:'🎲',name:'Game Day',kind:'Practice',kindColor:'#a8ff3e',
+     sig:'A structured ceremony where the engineering team runs multiple chaos scenarios in sequence, watches dashboards, and validates the system behaves as expected. Documented in a runbook.',
+     why:'WHY: Game Days build team muscle memory. When a real incident hits at 3am, the team has practiced the exact failure mode. They know the recovery steps because they\'ve done it before.'},
+  ],
+
+  phases:[
+    {title:'Phase 1 — Steady State Definition',desc:'Define what "working" means before breaking anything.',tasks:[
+      'Identify golden signals for your app: error rate, latency, throughput, saturation',
+      'Write Prometheus queries that measure each signal',
+      'Set SLO targets: error_rate < 1%, p99_latency < 500ms',
+      'Create a Grafana dashboard showing steady-state metrics',
+      'Verify all metrics are healthy before running any experiments',
+    ]},
+    {title:'Phase 2 — First Chaos Experiments',desc:'Start with the simplest fault: pod deletion.',tasks:[
+      'Install LitmusChaos: helm install chaos litmuschaos/litmus',
+      'Install pod-delete experiment from LitmusChaosHub',
+      'Write ChaosEngine targeting booking-api, duration=30s',
+      'Add HTTPProbe: check /health every 5s during experiment',
+      'Run experiment and watch pod restart and health probe recovery',
+      'Review verdict: PASS (SLO maintained) or FAIL',
+    ]},
+    {title:'Phase 3 — Network & Resource Chaos',desc:'Inject network failures and resource exhaustion.',tasks:[
+      'Run network-loss: 50% packet drop on booking-api for 60s',
+      'Run network-latency: add 500ms to all egress traffic',
+      'Run cpu-hog: pin all cores on one pod, verify HPA scales out',
+      'Run disk-fill: fill /tmp to 95%, verify app handles gracefully',
+      'Document each experiment verdict and any bugs found',
+    ]},
+    {title:'Phase 4 — Automated GameDays',desc:'Continuous resilience validation in CI/CD.',tasks:[
+      'Write ChaosSchedule: pod-delete runs nightly at 2am',
+      'Integrate chaos experiments into CI: run after every deployment',
+      'Build a chaos dashboard: experiment history, pass/fail rates',
+      'Set up alerts: PagerDuty if chaos experiment FAILS (means system is not resilient)',
+      'Write GameDay runbook: 3-hour scenario with 5 sequential experiments',
+    ]},
+  ],
+
+  yamls:[
+    {label:'ChaosEngine — Pod Delete Experiment',code:`apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: booking-pod-chaos
+  namespace: booking
+spec:
+  appinfo:
+    appns: booking
+    applabel: "app=booking-api"   # target pods with this label
+    appkind: deployment
+  engineState: active
+  chaosServiceAccount: litmus-admin
+  experiments:
+  - name: pod-delete
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: "30"             # inject chaos for 30 seconds
+        - name: CHAOS_INTERVAL
+          value: "10"             # delete a pod every 10 seconds
+        - name: FORCE
+          value: "false"          # graceful delete (not kill -9)
+      probe:
+      - name: check-booking-health
+        type: httpProbe
+        mode: Continuous          # run throughout the experiment
+        httpProbe/inputs:
+          url: http://booking-api.booking.svc.cluster.local/health
+          insecureSkipVerify: false
+          method:
+            get:
+              criteria: "=="
+              responseCode: "200"
+        runProperties:
+          probeTimeout: 5s
+          interval: 5s
+          attempt: 3
+          probePollingInterval: 2s`},
+    {label:'ChaosSchedule + Network Chaos',code:`# Schedule chaos to run every night at 2am
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: nightly-resilience-check
+  namespace: booking
+spec:
+  schedule:
+    now: false
+    repeat:
+      timeRange:
+        startTime: "02:00"
+        endTime: "02:30"
+      workDays:
+        includedDays: "Mon,Tue,Wed,Thu,Fri"
+      minChaosInterval: "24h"
+  engineTemplateSpec:
+    appinfo:
+      appns: booking
+      applabel: "app=booking-api"
+      appkind: deployment
+    experiments:
+    - name: pod-delete
+
+---
+# Network latency experiment
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: booking-network-chaos
+  namespace: booking
+spec:
+  appinfo:
+    appns: booking
+    applabel: "app=booking-api"
+    appkind: deployment
+  experiments:
+  - name: pod-network-latency
+    spec:
+      components:
+        env:
+        - name: NETWORK_INTERFACE
+          value: eth0
+        - name: NETWORK_LATENCY
+          value: "500"            # add 500ms to all traffic
+        - name: TOTAL_CHAOS_DURATION
+          value: "60"
+      probe:
+      - name: check-latency-slo
+        type: promProbe
+        mode: Edge
+        promProbe/inputs:
+          endpoint: http://prometheus.monitoring.svc.cluster.local:9090
+          query: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[1m]))
+          comparator:
+            type: float
+            criteria: "<="
+            value: "2.0"         # p99 must stay under 2s even during chaos`},
+  ],
+  commands:[
+    {label:'Install LitmusChaos + run first experiment',cmd:`# Add LitmusChaos Helm repo
+helm repo add litmuschaos https://litmuschaos.github.io/litmus-helm/
+helm repo update
+
+# Install LitmusChaos (includes Portal UI)
+helm install chaos litmuschaos/litmus \\
+  --namespace litmus \\
+  --create-namespace \\
+  --set portal.frontend.service.type=LoadBalancer
+
+# Install pod-delete ChaosExperiment
+kubectl apply -f https://hub.litmuschaos.io/api/chaos/3.3.0?file=faults/kubernetes/pod-delete/fault.yaml \\
+  -n booking
+
+# Apply the ChaosEngine to trigger the experiment
+kubectl apply -f chaos-engine.yaml -n booking
+
+# Watch chaos experiment execution
+kubectl describe chaosengine booking-pod-chaos -n booking
+
+# Check experiment result
+kubectl describe chaosresult booking-pod-chaos-pod-delete -n booking`},
+    {label:'Validate steady-state before/after',cmd:`# Check error rate before experiment
+kubectl exec -n monitoring deploy/prometheus -- \\
+  promtool query instant http://localhost:9090 \\
+  'sum(rate(http_requests_total{status=~"5..",namespace="booking"}[1m])) / sum(rate(http_requests_total{namespace="booking"}[1m]))'
+
+# Run continuous health check during experiment
+watch -n 2 curl -s http://booking-api.booking.svc.cluster.local/health
+
+# After experiment: view LitmusChaos dashboard
+kubectl port-forward svc/chaos-litmus-frontend-service 9091:9091 -n litmus
+
+# Get experiment verdict (PASS / FAIL)
+kubectl get chaosresult -n booking -o json | \\
+  jq '.items[] | {name: .metadata.name, verdict: .status.experimentStatus.verdict}'`},
+  ]
+},
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -2268,6 +3638,8 @@ const ranks = [
   [1000,'🚀 K8s Engineer'],
   [2000,'🛡️ Platform Engineer'],
   [3500,'🏆 Cluster Architect'],
+  [6000,'🌐 Staff Infrastructure Engineer'],
+  [9000,'🔱 Distinguished Engineer'],
 ];
 
 function getRank(xp) {

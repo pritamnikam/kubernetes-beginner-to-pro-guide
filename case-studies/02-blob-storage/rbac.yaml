@@ -1,0 +1,29 @@
+# Role: scoped to team-a namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: team-a-role
+  namespace: team-a
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list", "create", "update"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"]              # can read but NOT delete
+
+---
+# RoleBinding: grant Role to ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: team-a-binding
+  namespace: team-a
+subjects:
+- kind: ServiceAccount
+  name: team-a-sa
+  namespace: team-a
+roleRef:
+  kind: Role
+  name: team-a-role
+  apiGroup: rbac.authorization.k8s.io
