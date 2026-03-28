@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/org/ecom-k8s.git
+    targetRevision: main         # track main branch
+    path: k8s/                   # all YAML lives here
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend
+  syncPolicy:
+    automated:
+      prune: true                # delete resources removed from Git
+      selfHeal: true             # re-apply if someone kubectl edits manually
+    syncOptions:
+    - CreateNamespace=true

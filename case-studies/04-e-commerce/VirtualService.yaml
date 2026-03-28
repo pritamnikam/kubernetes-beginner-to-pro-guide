@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  hosts:
+  - frontend-svc
+  http:
+  - name: canary-split
+    route:
+    - destination:
+        host: frontend-svc
+        subset: v1           # DestinationRule defines these subsets
+      weight: 90             # 90% of traffic to stable version
+    - destination:
+        host: frontend-svc
+        subset: v2
+      weight: 10             # 10% canary traffic
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+    timeout: 10s
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  host: frontend-svc
+  trafficPolicy:
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+  subsets:
+  - name: v1
+    labels:
+      version: v1            # matches pods with label version=v1
+  - name: v2
+    labels:
+      version: v2

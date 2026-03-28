@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+  strategy:
+    canary:
+      canaryService: frontend-canary-svc
+      stableService: frontend-stable-svc
+      analysis:
+        templates:
+        - templateName: success-rate    # Prometheus query
+        startingStep: 2
+      steps:
+      - setWeight: 10          # 10% traffic to canary
+      - pause: {duration: 5m}  # wait 5 minutes
+      - setWeight: 30
+      - pause: {duration: 5m}
+      - setWeight: 60
+      - pause: {duration: 5m}
+      - setWeight: 100         # full rollout
