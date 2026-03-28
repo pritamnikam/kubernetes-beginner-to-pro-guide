@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: expire-reservations
+  namespace: booking
+spec:
+  schedule: "*/5 * * * *"           # every 5 minutes
+  concurrencyPolicy: Forbid          # don't overlap if previous still running
+  startingDeadlineSeconds: 60        # skip if can't start within 60s
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2                # retry failed jobs up to 2 times
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: expiry-worker
+            image: gcr.io/proj/booking-worker:latest
+            command: ["/app/expire-reservations"]
+            env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: booking-secrets
+                  key: db-host

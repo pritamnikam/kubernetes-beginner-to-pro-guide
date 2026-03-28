@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: booking-pdb
+  namespace: booking
+spec:
+  # Always keep at least 2 pods running
+  # Even during GKE node upgrades or kubectl drain
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: booking-api
+
+# Note: set maxUnavailable instead if you prefer:
+# maxUnavailable: 1  — allow at most 1 pod down at once
